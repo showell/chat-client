@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 
-const source = readFileSync(new URL('../chat/chat_compose.js', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../js/chat_compose.js', import.meta.url), 'utf8');
 const sandbox = { window: {} };
 vm.runInNewContext(source, sandbox);
 const plan = sandbox.window.ChatCompose.resizePlan;

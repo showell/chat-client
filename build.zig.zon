@@ -1,0 +1,9 @@
+.{
+    // The chat's browser client, hand-written JavaScript: no dependencies.
+    .name = .chat_client,
+    .version = "0.1.0",
+    .fingerprint = 0xa098337415236194,
+    .minimum_zig_version = "0.17.0",
+    .paths = .{ "build.zig", "build.zig.zon", "js", "tools", "README.md" },
+    .dependencies = .{},
+}
