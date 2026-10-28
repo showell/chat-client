@@ -2,7 +2,7 @@
 
    Wire shape: Go ships an inline JSON payload (in a sibling
    <script type="application/json"> next to the mount slot) of three
-   ordered arrays: conversations, pinned_sessions, sessions. Each item
+   ordered arrays: conversations, pinned_sessions, topics. Each item
    is {id, label, url, active} — labels and links, no rendered HTML.
 
    Responsibilities:
@@ -265,7 +265,7 @@ window.ChatLeftSidebar = (function(){
       { className: 'muted chat-pin-hint', text: 'Drag a session here to pin it' },
       makeSessionItem);
     var ses  = buildSection('Sessions', 'chat-session-drop', 'sessions',
-      data.sessions,
+      data.topics,
       { className: 'muted', text: 'No sessions yet' },
       makeSessionItem);
 
