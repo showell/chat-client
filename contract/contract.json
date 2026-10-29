@@ -1,0 +1,565 @@
+{
+  "about": "The client's contract with the server, machine-readable. CONTRACT.md is the prose; this file is what tools/test_contract.mjs checks the client against, and what a server checks its own output against (`node tools/test_contract.mjs --check ...`). A payload's `shape` names each field the client reads, with its type, whether a server must send it, and the file:line that reads it. `ignored` names fields servers send that the client does not read. `examples` are the fixtures: a sequence, fed to the client in order.",
+  "placeholders": {
+    "<conv-base>": "the conversation's URL root, the page's data-conv-base: /chat/c/<pair> for a DM, /channel/<name> for a channel",
+    "<session-base>": "<conv-base>/<session>, the open topic's URL",
+    "<sid>": "a topic id",
+    "<id>": "a message id, <sid>_<n>",
+    "<slug>": "a doc's slug",
+    "<q>": "a URL-encoded query value"
+  },
+  "payloads": {
+    "page_chat_root": {
+      "carrier": "the attributes of <div id=\"chat-root\"> on the conversation page",
+      "shape": {
+        "type": "object",
+        "fields": {
+          "data-conv": { "type": "string", "required": true, "read": ["js/chat.js:3", "js/notify.js:52"], "note": "the conversation key: the DM pair (\"1_2\") or the channel name" },
+          "data-session": { "type": "string", "required": true, "read": ["js/chat.js:4", "js/notify.js:52"], "note": "the open topic's id" },
+          "data-conv-base": { "type": "string", "required": true, "read": ["js/chat.js:9"], "note": "the conversation's URL root; every per-topic URL is built on it" },
+          "data-me": { "type": "string", "required": true, "read": ["js/chat.js:16", "js/chat.js:224"], "note": "the viewer's account id; a message is mine when its from_uid is this, and a reaction is mine when its uid is" },
+          "data-me-name": { "type": "string", "required": true, "read": ["js/chat.js:17"], "note": "the viewer's name; decides `mine` for a message with no from_uid" },
+          "data-search-min": { "type": "string", "pattern": "^[1-9][0-9]*$", "required": true, "read": ["js/chat.js:327"], "note": "the shortest word search looks up, in UTF-8 bytes; ChatSearch.init throws without it" },
+          "data-upload-image-max": { "type": "string", "pattern": "^[1-9][0-9]*$", "required": true, "read": ["js/chat.js:364"], "note": "the image cap in bytes; ChatCompose.init throws without it" },
+          "data-upload-video-max": { "type": "string", "pattern": "^[1-9][0-9]*$", "required": true, "read": ["js/chat.js:365"], "note": "the video cap in bytes; ChatCompose.init throws without it" },
+          "data-upload-accept": { "type": "string", "required": true, "read": ["js/chat.js:366"], "note": "the file picker's accept list; ChatCompose.init throws without it" }
+        }
+      },
+      "examples": [
+        {
+          "data-conv": "1_2",
+          "data-session": "plans",
+          "data-conv-base": "/chat/c/1_2",
+          "data-me": "1",
+          "data-me-name": "Steve",
+          "data-search-min": "2",
+          "data-upload-image-max": "10485760",
+          "data-upload-video-max": "104857600",
+          "data-upload-accept": "image/png,image/jpeg,image/gif,image/webp,video/mp4,video/webm,video/quicktime"
+        }
+      ]
+    },
+    "page_first_topic": {
+      "carrier": "the attributes of <div id=\"chat-first-topic\"> on the no-topics page",
+      "shape": {
+        "type": "object",
+        "fields": {
+          "data-conv-base": { "type": "string", "required": true, "read": ["js/chat_first_topic.js:13"], "note": "where the Add Topic form posts (<conv-base>/new) and where it goes after" }
+        }
+      },
+      "examples": [{ "data-conv-base": "/chat/c/1_2" }]
+    },
+    "page_docs_body": {
+      "carrier": "the attributes of <textarea id=\"docs-body\"> on a doc's page",
+      "shape": {
+        "type": "object",
+        "fields": {
+          "data-slug": { "type": "string", "required": true, "read": ["js/docs.js:8"], "note": "the doc's slug, sent with every save and post" }
+        }
+      },
+      "examples": [{ "data-slug": "reading-list" }]
+    },
+    "sidebar_data": {
+      "carrier": "the inline <script type=\"application/json\" id=\"chat-sidebar-data\"> on the conversation page, parsed at js/chat.js:342 and handed to ChatLeftSidebar.init",
+      "shape": {
+        "type": "object",
+        "fields": {
+          "conversations": {
+            "type": "array", "required": true, "read": ["js/chat_left_sidebar.js:262"],
+            "note": "every DM partner, then every channel; a missing key reads as an empty section",
+            "items": {
+              "type": "object",
+              "fields": {
+                "id": { "type": "string", "required": true, "read": ["js/chat_left_sidebar.js:98", "js/chat_left_sidebar.js:106"], "note": "\"uid:<n>\" for a person (gets the presence dot), \"ch:<name>\" for a channel" },
+                "label": { "type": "string", "required": true, "read": ["js/chat_left_sidebar.js:110"] },
+                "url": { "type": "string", "required": true, "read": ["js/chat_left_sidebar.js:101"] },
+                "active": { "type": "boolean", "required": true, "read": ["js/chat_left_sidebar.js:111"], "note": "true for the open conversation" },
+                "online": { "type": "boolean", "required": false, "read": ["js/chat_left_sidebar.js:99"], "note": "sent (as true) only for a person who is online" }
+              }
+            }
+          },
+          "pinned_sessions": {
+            "type": "array", "required": true, "read": ["js/chat_left_sidebar.js:264"],
+            "note": "this conversation's topics the viewer pinned; a missing key reads as no pins",
+            "items": { "ref": "sidebar_topic" }
+          },
+          "topics": {
+            "type": "array", "required": true, "read": ["js/chat_left_sidebar.js:268"],
+            "note": "this conversation's other topics; a missing key reads as \"No sessions yet\" (the 2026-10-28 rename from `sessions`)",
+            "items": { "ref": "sidebar_topic" }
+          }
+        }
+      },
+      "examples": [
+        {
+          "conversations": [
+            { "id": "uid:2", "label": "Claude", "url": "/chat/c/1_2", "active": true, "online": true },
+            { "id": "uid:3", "label": "Ann", "url": "/chat/c/1_3", "active": false },
+            { "id": "ch:general", "label": "# general", "url": "/channel/general", "active": false }
+          ],
+          "pinned_sessions": [
+            { "id": "plans", "label": "plans", "url": "/chat/c/1_2/plans", "active": true }
+          ],
+          "topics": [
+            { "id": "ideas", "label": "ideas", "url": "/chat/c/1_2/ideas", "active": false },
+            { "id": "zig", "label": "zig", "url": "/chat/c/1_2/zig", "active": false }
+          ]
+        }
+      ]
+    },
+    "sidebar_topic": {
+      "carrier": "one row of sidebar_data's pinned_sessions or topics",
+      "shape": {
+        "type": "object",
+        "fields": {
+          "id": { "type": "string", "required": true, "read": ["js/chat_left_sidebar.js:117"], "note": "the topic id; the pin/unpin URL and the row's sort key" },
+          "label": { "type": "string", "required": true, "read": ["js/chat_left_sidebar.js:119"] },
+          "url": { "type": "string", "required": true, "read": ["js/chat_left_sidebar.js:119"] },
+          "active": { "type": "boolean", "required": true, "read": ["js/chat_left_sidebar.js:121"], "note": "true for the open topic" }
+        }
+      },
+      "examples": [
+        { "id": "plans", "label": "plans", "url": "/chat/c/1_2/plans", "active": true },
+        { "id": "ideas", "label": "ideas", "url": "/chat/c/1_2/ideas", "active": false }
+      ]
+    },
+    "sidebar_user_arrived": {
+      "carrier": "a `message` frame on /chat/sidebar/stream, kind user-arrived",
+      "shape": {
+        "type": "object",
+        "ignored": ["conv"],
+        "fields": {
+          "kind": { "type": "string", "const": "user-arrived", "required": true, "read": ["js/chat_left_sidebar.js:236"] },
+          "user_id": { "type": "string", "required": true, "read": ["js/chat_left_sidebar.js:196", "js/chat_left_sidebar.js:199"] },
+          "user_name": { "type": "string", "required": false, "read": ["js/chat_left_sidebar.js:200"], "note": "the row's label; the user_id without it" },
+          "url": { "type": "string", "required": true, "read": ["js/chat_left_sidebar.js:196", "js/chat_left_sidebar.js:201"], "note": "the DM's URL, built per recipient" }
+        }
+      },
+      "examples": [{ "kind": "user-arrived", "user_id": "4", "user_name": "Bo", "conv": "1_4", "url": "/chat/c/1_4" }]
+    },
+    "sidebar_topic_added": {
+      "carrier": "a `message` frame on /chat/sidebar/stream, kind topic-added",
+      "shape": {
+        "type": "object",
+        "fields": {
+          "kind": { "type": "string", "const": "topic-added", "required": true, "read": ["js/chat_left_sidebar.js:237"] },
+          "conv": { "type": "string", "required": true, "read": ["js/chat_left_sidebar.js:207"], "note": "the conversation key; a topic of another conversation is not shown" },
+          "sid": { "type": "string", "required": true, "read": ["js/chat_left_sidebar.js:207", "js/chat_left_sidebar.js:212", "js/chat_left_sidebar.js:213"] },
+          "url": { "type": "string", "required": true, "read": ["js/chat_left_sidebar.js:207", "js/chat_left_sidebar.js:214"] }
+        }
+      },
+      "examples": [{ "kind": "topic-added", "conv": "1_2", "sid": "lunch", "url": "/chat/c/1_2/lunch" }]
+    },
+    "sidebar_user_online": {
+      "carrier": "a `message` frame on /chat/sidebar/stream, kind user-online",
+      "shape": {
+        "type": "object",
+        "ignored": ["user_name"],
+        "fields": {
+          "kind": { "type": "string", "const": "user-online", "required": true, "read": ["js/chat_left_sidebar.js:238"] },
+          "user_id": { "type": "string", "required": true, "read": ["js/chat_left_sidebar.js:224", "js/chat_left_sidebar.js:225"] }
+        }
+      },
+      "examples": [{ "kind": "user-online", "user_id": "3", "user_name": "Ann" }]
+    },
+    "message_frame": {
+      "carrier": "a `message` frame (no `event:` line) on <session-base>/stream, parsed at js/chat.js:284; the record each bubble is built from",
+      "examples_note": "The driver sends all but the last example as the backlog and the last as a live message, so the last one's cid round-trips.",
+      "shape": {
+        "type": "object",
+        "fields": {
+          "index": { "type": "integer", "required": true, "read": ["js/chat.js:216", "js/message.js:202", "js/message.js:252"], "note": "0-based position in the topic; the message number is index+1" },
+          "from": { "type": "string", "required": true, "read": ["js/chat.js:285", "js/message.js:202", "js/chat.js:123"], "note": "the author's name" },
+          "from_uid": { "type": "string", "required": false, "read": ["js/chat.js:285"], "note": "the author's account; absent on a message stored before accounts were recorded" },
+          "at": { "type": "string", "required": true, "read": ["js/message.js:205", "js/message.js:233", "js/chat.js:124"], "note": "an RFC 3339 UTC instant" },
+          "html": { "type": "string", "required": true, "read": ["js/message.js:256"], "note": "the rendered markdown, sanitized by the server; see `markup`" },
+          "markdown": { "type": "string", "required": true, "read": ["js/chat.js:217", "js/message.js:277", "js/chat.js:75"], "note": "the message as written; \"Edit of MSG_<id>\" at its start supersedes that message" },
+          "id": { "type": "string", "required": true, "read": ["js/chat.js:183", "js/message.js:251", "js/chat.js:218"], "note": "<sid>_<n>" },
+          "cid": { "type": "string", "required": false, "read": ["js/chat.js:301", "js/chat.js:311"], "note": "the sender's client id, on a live frame only; acknowledges this tab's own send" }
+        }
+      },
+      "examples": [
+        {
+          "index": 0, "from": "Steve H", "from_uid": "1", "at": "2026-10-28T14:05:00Z",
+          "html": "<p>See <a href=\"#msg-plans_2\" class=\"msg-ref\">MSG_plans_2</a> and <a href=\"#msg-ideas_4\" class=\"msg-ref\">MSG_ideas_4</a>.</p>\n<pre class=\"chat-quote\">quoted words</pre>\n<pre><code class=\"language-zig\">const a = 1;\n</code></pre>\n<p><img src=\"/chat/c/1_2/plans/uploads/a.png\" alt=\"a\" width=\"640\" height=\"480\"></p>\n<p><a href=\"https://example.org\" target=\"_blank\" rel=\"noopener\">out</a></p>\n",
+          "markdown": "See MSG_plans_2 and MSG_ideas_4.", "id": "plans_1"
+        },
+        { "index": 1, "from": "Claude", "from_uid": "2", "at": "2026-10-28T14:06:00Z", "html": "<p>Hi</p>\n", "markdown": "Hi", "id": "plans_2" },
+        { "index": 2, "from": "Steve", "at": "2026-10-28T14:07:00Z", "html": "<p>old</p>\n", "markdown": "old", "id": "plans_3" },
+        { "index": 3, "from": "Steve", "from_uid": "1", "at": "2026-10-28T14:08:00Z", "html": "<p>Edit of <a href=\"#msg-plans_2\" class=\"msg-ref\">MSG_plans_2</a></p>\n<p>Hello</p>\n", "markdown": "Edit of MSG_plans_2\n\nHello", "id": "plans_4", "cid": "cid-1" }
+      ]
+    },
+    "backlog_size": {
+      "carrier": "the data of an `event: backlog-size` frame on <session-base>/stream: the number of message frames that follow as the backlog, as decimal text",
+      "shape": { "type": "string", "pattern": "^[0-9]+$", "read": ["js/chat.js:270", "js/chat.js:276"], "note": "anything but a count stops the topic and says so" },
+      "examples": ["3"]
+    },
+    "reaction_line": {
+      "carrier": "one line of GET <session-base>/reactions (one JSON object a line), and the data of each `event: reaction` frame on <session-base>/stream; parsed at js/chat_reactions.js:40",
+      "shape": {
+        "type": "object",
+        "ignored": ["at"],
+        "fields": {
+          "msg": { "type": "integer", "required": true, "read": ["js/chat_reactions.js:42", "js/chat_reactions.js:48"], "note": "the message number, index+1" },
+          "emoji": { "type": "string", "required": true, "read": ["js/chat_reactions.js:44"] },
+          "uid": { "type": "string", "required": true, "read": ["js/chat_reactions.js:46"], "note": "the reactor's account; mine when it is data-me" },
+          "from": { "type": "string", "required": true, "read": ["js/chat_reactions.js:46"], "note": "the reactor's name, for the chip's title" },
+          "on": { "type": "boolean", "required": true, "read": ["js/chat_reactions.js:46"], "note": "true adds, false retracts; the last line wins" }
+        }
+      },
+      "examples": [
+        { "msg": 2, "uid": "1", "from": "Steve", "emoji": "👍", "on": true, "at": "2026-10-28T14:09:00Z" },
+        { "msg": 2, "uid": "2", "from": "Claude", "emoji": "👍", "on": true, "at": "2026-10-28T14:09:30Z" },
+        { "msg": 1, "uid": "2", "from": "Claude", "emoji": "🎉", "on": true, "at": "2026-10-28T14:10:00Z" },
+        { "msg": 1, "uid": "2", "from": "Claude", "emoji": "🎉", "on": false, "at": "2026-10-28T14:10:30Z" }
+      ]
+    },
+    "saved_ids": {
+      "carrier": "the JSON answer of GET <session-base>/saved",
+      "shape": { "type": "array", "read": ["js/chat.js:49"], "items": { "type": "string" }, "note": "the ids of this topic's messages in the viewer's reading list" },
+      "examples": [["plans_2"]]
+    },
+    "topic_created": {
+      "carrier": "the JSON answer of POST <conv-base>/new",
+      "shape": {
+        "type": "object",
+        "ignored": ["conv"],
+        "fields": {
+          "sid": { "type": "string", "required": true, "read": ["js/chat_left_sidebar.js:285", "js/chat_first_topic.js:37"], "note": "the topic made; the page goes to <conv-base>/<sid>" }
+        }
+      },
+      "examples": [{ "conv": "1_2", "sid": "lunch" }]
+    },
+    "upload_answer": {
+      "carrier": "the JSON answer of POST <session-base>/upload, parsed at js/chat_compose.js:231",
+      "shape": {
+        "type": "object",
+        "fields": {
+          "url": { "type": "string", "required": true, "read": ["js/chat_compose.js:233", "js/chat_compose.js:241"] },
+          "kind": { "type": "string", "enum": ["image", "video"], "required": true, "read": ["js/chat_compose.js:232"], "note": "video inserts a <video>, anything else an <img>" },
+          "name": { "type": "string", "required": false, "read": ["js/chat_compose.js:239"], "note": "the <img>'s alt; \"image\" without it" },
+          "width": { "type": "integer", "required": false, "read": ["js/chat_compose.js:240"], "note": "with height, both over 0, sets the <img>'s width and height", "sent": "always 0 today (roc-webbox chat/Upload.roc stored_answer; angry-gopher zig-server/src/chat_upload.zig), so the client's branch for it never runs" },
+          "height": { "type": "integer", "required": false, "read": ["js/chat_compose.js:240"], "sent": "always 0 today, as width" }
+        }
+      },
+      "examples": [
+        { "url": "/chat/c/1_2/plans/uploads/a.png", "name": "a.png", "kind": "image", "width": 640, "height": 480 },
+        { "url": "/chat/c/1_2/plans/uploads/b.webm", "name": "b.webm", "kind": "video", "width": 0, "height": 0 }
+      ]
+    },
+    "search_words": {
+      "carrier": "the JSON answer of GET /chat/search/words?prefix=<q>",
+      "shape": {
+        "type": "object",
+        "fields": {
+          "prefix": { "type": "string", "required": true, "read": ["js/chat_search.js:175"], "note": "the prefix as the server read it; each word begins with it" },
+          "most": { "type": "integer", "required": true, "read": ["js/chat_search.js:167"], "note": "the cap on words in one answer" },
+          "unreadable": { "type": "integer", "required": false, "read": ["js/chat_search.js:166", "js/chat_search.js:167"], "note": "topics the server could not read; said when over 0" },
+          "words": {
+            "type": "array", "required": true, "read": ["js/chat_search.js:165"], "note": "in the server's order",
+            "items": {
+              "type": "object",
+              "fields": {
+                "word": { "type": "string", "required": true, "read": ["js/chat_search.js:175", "js/chat_search.js:179"] },
+                "count": { "type": "integer", "required": true, "read": ["js/chat_search.js:176"], "note": "how many messages hold it" }
+              }
+            }
+          }
+        }
+      },
+      "examples": [{ "prefix": "pla", "most": 2, "unreadable": 1, "words": [{ "word": "plans", "count": 3 }, { "word": "play", "count": 1 }] }]
+    },
+    "search_messages": {
+      "carrier": "the JSON answer of GET /chat/search/messages?word=<q>",
+      "shape": {
+        "type": "object",
+        "ignored": ["word"],
+        "fields": {
+          "matched": { "type": "integer", "required": true, "read": ["js/chat_search.js:201", "js/chat_search.js:202"], "note": "how many messages hold the word; more than are sent when capped" },
+          "unreadable": { "type": "integer", "required": false, "read": ["js/chat_search.js:200", "js/chat_search.js:202"] },
+          "messages": {
+            "type": "array", "required": true, "read": ["js/chat_search.js:199"], "note": "in the server's order",
+            "items": {
+              "type": "object",
+              "fields": {
+                "conv": { "type": "string", "required": true, "read": ["js/chat_search.js:188", "js/chat_search.js:189", "js/chat_search.js:210"], "note": "the conversation's URL root (<conv-base>), not its key" },
+                "kind": { "type": "string", "enum": ["dm", "channel"], "required": true, "read": ["js/chat_search.js:189"] },
+                "sid": { "type": "string", "required": true, "read": ["js/chat_search.js:188", "js/chat_search.js:190", "js/chat_search.js:210"] },
+                "id": { "type": "string", "required": true, "read": ["js/chat_search.js:210"] },
+                "from": { "type": "string", "required": true, "read": ["js/chat_search.js:207"] },
+                "date": { "type": "string", "required": true, "read": ["js/chat_search.js:207"], "note": "an RFC 3339 instant" },
+                "before": { "type": "string", "required": true, "read": ["js/chat_search.js:208"], "note": "the raw markdown before the word, already cut" },
+                "mark": { "type": "string", "required": true, "read": ["js/chat_search.js:208"], "note": "the word as the index read it" },
+                "after": { "type": "string", "required": true, "read": ["js/chat_search.js:208"] }
+              }
+            }
+          }
+        }
+      },
+      "examples": [
+        {
+          "word": "plans", "matched": 3, "unreadable": 1,
+          "messages": [
+            { "conv": "/chat/c/1_2", "kind": "dm", "sid": "plans", "id": "plans_1", "from": "Steve", "date": "2026-10-28T14:05:00Z", "before": "See ", "mark": "plans", "after": " soon" },
+            { "conv": "/channel/general", "kind": "channel", "sid": "lunch", "id": "lunch_3", "from": "Ann", "date": "2026-10-28T13:00:00Z", "before": "", "mark": "plans", "after": "!" }
+          ]
+        }
+      ]
+    },
+    "notification": {
+      "carrier": "a `message` frame on /chat/notifications, parsed at js/notify.js:56",
+      "shape": {
+        "type": "object",
+        "fields": {
+          "text": { "type": "string", "required": true, "read": ["js/notify.js:57", "js/notify.js:65"], "note": "shown as text, never as HTML" },
+          "link_url": { "type": "string", "required": true, "read": ["js/notify.js:57", "js/notify.js:65"] },
+          "conv": { "type": "string", "required": false, "read": ["js/notify.js:63"], "note": "with session: a ping about the open topic is not shown; absent on a came-online ping" },
+          "session": { "type": "string", "required": false, "read": ["js/notify.js:63"] }
+        }
+      },
+      "examples": [
+        { "conv": "1_3", "session": "lunch", "text": "Ann: lunch?", "link_url": "/chat/c/1_3/lunch" },
+        { "conv": "1_2", "session": "plans", "text": "Claude: hi", "link_url": "/chat/c/1_2/plans" }
+      ]
+    },
+    "recent_chat_event": {
+      "carrier": "a chat row of the Recent feed: an item of recent_data, or a `message` frame on /chat/recent/stream",
+      "shape": {
+        "type": "object",
+        "fields": {
+          "kind": { "type": "string", "const": "chat", "required": true, "read": ["js/recent.js:142", "js/recent.js:244"] },
+          "at": { "type": "string", "required": true, "read": ["js/recent.js:149", "js/recent.js:181", "js/recent.js:244"], "note": "an RFC 3339 instant; the feed's sort key" },
+          "url": { "type": "string", "required": true, "read": ["js/recent.js:143", "js/recent.js:147", "js/recent.js:101"], "note": "the topic's URL; also the row's identity" },
+          "who": { "type": "string", "required": false, "read": ["js/recent.js:119", "js/recent.js:190", "js/recent.js:193"], "note": "the last author, \"You\" for the viewer" },
+          "where": { "type": "string", "required": false, "read": ["js/recent.js:106", "js/recent.js:120"], "note": "\"in <channel>\" or \"to <partner>\"" },
+          "topic": { "type": "string", "required": false, "read": ["js/recent.js:167", "js/recent.js:177"] },
+          "excerpt": { "type": "string", "required": false, "read": ["js/recent.js:186", "js/recent.js:196"] },
+          "dm": { "type": "boolean", "required": false, "read": ["js/recent.js:105", "js/recent.js:114", "js/recent.js:158"], "note": "sent (as true) only for a DM" }
+        }
+      },
+      "examples": [
+        { "kind": "chat", "at": "2026-10-28T13:00:00Z", "url": "/channel/general/lunch", "who": "Ann Lee", "where": "in general", "topic": "lunch", "excerpt": "who is in?" },
+        { "kind": "chat", "at": "2026-10-28T14:00:00Z", "url": "/chat/c/1_2/plans", "who": "You", "where": "to Claude", "topic": "plans", "excerpt": "draft is up", "dm": true }
+      ]
+    },
+    "recent_doc_event": {
+      "carrier": "a doc row of the Recent feed: an item of recent_data, or a `message` frame on /chat/recent/stream",
+      "shape": {
+        "type": "object",
+        "ignored": ["who"],
+        "fields": {
+          "kind": { "type": "string", "const": "doc", "required": true, "read": ["js/recent.js:142", "js/recent.js:244"] },
+          "at": { "type": "string", "required": true, "read": ["js/recent.js:149", "js/recent.js:181", "js/recent.js:244"] },
+          "slug": { "type": "string", "required": true, "read": ["js/recent.js:144", "js/recent.js:147", "js/recent.js:101"] },
+          "title": { "type": "string", "required": false, "read": ["js/recent.js:177"], "note": "the row's title; the slug without it" }
+        }
+      },
+      "examples": [{ "kind": "doc", "at": "2026-10-28T12:00:00Z", "who": "You", "slug": "reading-list", "title": "Reading List" }]
+    },
+    "recent_data": {
+      "carrier": "the inline <script type=\"application/json\" id=\"recent-data\"> on /chat/recent, newest first; parsed at js/recent.js:21",
+      "shape": { "type": "array", "read": ["js/recent.js:21", "js/recent.js:23"], "items": { "oneOf": [{ "ref": "recent_chat_event" }, { "ref": "recent_doc_event" }] }, "note": "anything but an array reads as an empty feed" },
+      "examples": [[
+        { "kind": "chat", "at": "2026-10-28T14:00:00Z", "url": "/chat/c/1_2/plans", "who": "You", "where": "to Claude", "topic": "plans", "excerpt": "draft is up", "dm": true },
+        { "kind": "doc", "at": "2026-10-28T12:00:00Z", "who": "You", "slug": "reading-list", "title": "Reading List" }
+      ]]
+    },
+    "code_entry": {
+      "carrier": "one entry of the /chat/code page: an item of code_data, or a `message` frame on /chat/code/stream",
+      "shape": {
+        "type": "object",
+        "ignored": ["conv"],
+        "fields": {
+          "source_id": { "type": "string", "required": true, "read": ["js/code.js:33", "js/code.js:84", "js/code.js:86"], "note": "the message's id; the entry's identity" },
+          "from": { "type": "string", "required": true, "read": ["js/code.js:34"] },
+          "at": { "type": "string", "required": true, "read": ["js/code.js:35"] },
+          "source_url": { "type": "string", "required": true, "read": ["js/code.js:36"] },
+          "blocks": {
+            "type": "array", "required": true, "read": ["js/code.js:38"],
+            "items": {
+              "type": "object",
+              "fields": {
+                "lang": { "type": "string", "required": false, "read": ["js/code.js:45", "js/code.js:52"], "note": "empty for no language" },
+                "body": { "type": "string", "required": true, "read": ["js/code.js:61"] }
+              }
+            }
+          }
+        }
+      },
+      "examples": [{ "source_id": "plans_1", "from": "Steve", "conv": "1_2", "at": "2026-10-28T14:05:00Z", "blocks": [{ "lang": "zig", "body": "const a = 1;\n" }], "source_url": "/chat/c/1_2/plans#msg-plans_1" }]
+    },
+    "code_data": {
+      "carrier": "the inline <script type=\"application/json\" id=\"code-data\"> on /chat/code; parsed at js/code.js:17",
+      "shape": { "type": "array", "read": ["js/code.js:17", "js/code.js:19"], "items": { "ref": "code_entry" }, "note": "anything but an array reads as no entries" },
+      "examples": [[{ "source_id": "plans_1", "from": "Steve", "conv": "1_2", "at": "2026-10-28T14:05:00Z", "blocks": [{ "lang": "", "body": "x\n" }], "source_url": "/chat/c/1_2/plans#msg-plans_1" }]]
+    },
+    "images_entry": {
+      "carrier": "one entry of the /chat/images page: an item of images_data, or a `message` frame on /chat/images/stream",
+      "shape": {
+        "type": "object",
+        "ignored": ["conv"],
+        "fields": {
+          "source_id": { "type": "string", "required": true, "read": ["js/images.js:70", "js/images.js:114", "js/images.js:117"] },
+          "from": { "type": "string", "required": true, "read": ["js/images.js:71"] },
+          "at": { "type": "string", "required": true, "read": ["js/images.js:72"] },
+          "source_url": { "type": "string", "required": true, "read": ["js/images.js:73"] },
+          "images": { "type": "array", "required": true, "read": ["js/images.js:82"], "items": { "type": "string" }, "note": "each an <img> tag, sanitized by the server" }
+        }
+      },
+      "examples": [{ "source_id": "plans_1", "from": "Steve", "conv": "1_2", "at": "2026-10-28T14:05:00Z", "images": ["<img src=\"/chat/c/1_2/plans/uploads/a.png\" alt=\"a\">"], "source_url": "/chat/c/1_2/plans#msg-plans_1" }]
+    },
+    "images_data": {
+      "carrier": "the inline <script type=\"application/json\" id=\"images-data\"> on /chat/images; parsed at js/images.js:17",
+      "shape": { "type": "array", "read": ["js/images.js:17", "js/images.js:19"], "items": { "ref": "images_entry" }, "note": "anything but an array reads as no entries" },
+      "examples": [[{ "source_id": "plans_1", "from": "Steve", "conv": "1_2", "at": "2026-10-28T14:05:00Z", "images": ["<img src=\"/chat/c/1_2/plans/uploads/a.png\" alt=\"a\">"], "source_url": "/chat/c/1_2/plans#msg-plans_1" }]]
+    },
+    "docs_posted": {
+      "carrier": "the JSON answer of POST /chat/docs/post",
+      "shape": {
+        "type": "object",
+        "fields": {
+          "conv": { "type": "string", "required": true, "read": ["js/docs.js:93"], "note": "the DM pair the doc went to" },
+          "session": { "type": "string", "required": true, "read": ["js/docs.js:93"] },
+          "id": { "type": "string", "required": false, "read": ["js/docs.js:93"], "note": "the message made; the page opens at it" }
+        }
+      },
+      "examples": [{ "conv": "1_2", "session": "plans", "id": "plans_5" }]
+    }
+  },
+  "streams": {
+    "topic": {
+      "url": "<session-base>/stream?since=0", "opened": "js/chat.js:237",
+      "events": {
+        "backlog-size": { "data": ["backlog_size"], "read": ["js/chat.js:263"], "note": "first on every connection (and every reconnect)" },
+        "message": { "data": ["message_frame"], "read": ["js/chat.js:283"], "note": "each with `id: <index>`, which the client does not read" },
+        "reaction": { "data": ["reaction_line"], "read": ["js/chat.js:281"] }
+      }
+    },
+    "sidebar": {
+      "url": "/chat/sidebar/stream", "opened": "js/chat_left_sidebar.js:230",
+      "events": { "message": { "data": ["sidebar_user_arrived", "sidebar_topic_added", "sidebar_user_online"], "read": ["js/chat_left_sidebar.js:231"], "note": "told apart by `kind`; another kind is ignored" } }
+    },
+    "notifications": {
+      "url": "/chat/notifications", "opened": "js/notify.js:54",
+      "events": { "message": { "data": ["notification"], "read": ["js/notify.js:55"] } }
+    },
+    "recent": {
+      "url": "/chat/recent/stream", "opened": "js/recent.js:241",
+      "events": { "message": { "data": ["recent_chat_event", "recent_doc_event"], "read": ["js/recent.js:242"] } }
+    },
+    "code": {
+      "url": "/chat/code/stream", "opened": "js/code.js:79",
+      "events": { "message": { "data": ["code_entry"], "read": ["js/code.js:80"] } }
+    },
+    "images": {
+      "url": "/chat/images/stream", "opened": "js/images.js:109",
+      "events": { "message": { "data": ["images_entry"], "read": ["js/images.js:110"] } }
+    }
+  },
+  "requests": [
+    { "name": "saved", "method": "GET", "url": "<session-base>/saved", "sent": "js/chat.js:48", "answer": "saved_ids", "statuses": "not 2xx: the page says it could not read the saved set" },
+    { "name": "reactions", "method": "GET", "url": "<session-base>/reactions", "sent": "js/chat_reactions.js:69", "answer": "text: one reaction_line a line", "statuses": "not 2xx: read as none" },
+    { "name": "react", "method": "POST", "url": "<session-base>/react", "sent": "js/chat_reactions.js:61", "form": ["msg", "emoji", "on"], "answer": "status only; the `reaction` frame repaints", "statuses": "not 2xx: \"Reaction failed\"" },
+    { "name": "send", "method": "POST", "url": "<session-base>/send", "sent": "js/chat_compose.js:90", "form": ["markdown", "cid"], "headers": { "X-Chat-Async": "1" }, "answer": "status only; the message frame carrying the cid is the confirmation", "statuses": "not 2xx, or no echo in 3 s: \"The host may be down\"" },
+    { "name": "upload", "method": "POST", "url": "<session-base>/upload", "sent": "js/chat_compose.js:216", "multipart": ["file"], "answer": "upload_answer", "statuses": "not 2xx: the answer's text is shown when it is short and not HTML" },
+    { "name": "topic stream", "method": "GET", "url": "<session-base>/stream?since=0", "sent": "js/chat.js:237", "answer": "stream topic" },
+    { "name": "raw transcript", "method": "GET", "url": "<session-base>/raw", "sent": "js/chat.js:388", "how": "window.open, a new tab" },
+    { "name": "download", "method": "GET", "url": "<session-base>/download", "sent": "js/chat.js:394", "how": "an <a> clicked; the server's Content-Disposition: attachment keeps the page" },
+    { "name": "new topic", "method": "POST", "url": "<conv-base>/new", "sent": "js/chat_add_topic.js:71", "form": ["topic"], "answer": "topic_created", "statuses": "not 2xx: the answer's text is shown under the form" },
+    { "name": "pin", "method": "POST", "url": "<conv-base>/<sid>/pin", "sent": "js/chat_drag_to_pin.js:187", "answer": "status only", "statuses": "not 2xx: the row goes back" },
+    { "name": "unpin", "method": "POST", "url": "<conv-base>/<sid>/unpin", "sent": "js/chat_drag_to_pin.js:187", "answer": "status only", "statuses": "not 2xx: the row goes back" },
+    { "name": "save to reading list", "method": "POST", "url": "/chat/docs/save_to_reading_list", "sent": "js/chat.js:127", "form": ["conv", "sid", "id", "from", "at", "body", "note"], "answer": "status only", "statuses": "not 2xx: \"Save failed\"" },
+    { "name": "message elsewhere", "method": "GET", "url": "/chat/msg/<id>", "sent": "js/chat.js:167", "how": "window.open; the server redirects to the message's topic" },
+    { "name": "search words", "method": "GET", "url": "/chat/search/words?prefix=<q>", "sent": "js/chat_search.js:162", "answer": "search_words", "statuses": "a redirect (the login page) reads as 401: signed out; 429: too fast; 503: not ready; any other not 200: failed (js/chat_search.js:87-95)" },
+    { "name": "search messages", "method": "GET", "url": "/chat/search/messages?word=<q>", "sent": "js/chat_search.js:197", "answer": "search_messages", "statuses": "as search words" },
+    { "name": "sidebar stream", "method": "GET", "url": "/chat/sidebar/stream", "sent": "js/chat_left_sidebar.js:230", "answer": "stream sidebar" },
+    { "name": "notifications", "method": "GET", "url": "/chat/notifications", "sent": "js/notify.js:54", "answer": "stream notifications" },
+    { "name": "recent stream", "method": "GET", "url": "/chat/recent/stream", "sent": "js/recent.js:241", "answer": "stream recent" },
+    { "name": "code stream", "method": "GET", "url": "/chat/code/stream", "sent": "js/code.js:79", "answer": "stream code" },
+    { "name": "images stream", "method": "GET", "url": "/chat/images/stream", "sent": "js/images.js:109", "answer": "stream images" },
+    { "name": "doc render", "method": "POST", "url": "/chat/docs/render", "sent": "js/docs.js:32", "form": ["body"], "answer": "text: HTML for the preview", "statuses": "not 2xx: the last preview stays" },
+    { "name": "doc save", "method": "POST", "url": "/chat/docs/save", "sent": "js/docs.js:42", "form": ["slug", "body"], "answer": "204 is saved", "statuses": "any other: \"Save failed (<status>)\"" },
+    { "name": "doc save at unload", "method": "BEACON", "url": "/chat/docs/save", "sent": "js/docs.js:66", "form": ["slug", "body"], "how": "navigator.sendBeacon, a form-encoded Blob" },
+    { "name": "doc post", "method": "POST", "url": "/chat/docs/post", "sent": "js/docs.js:89", "form": ["slug"], "answer": "docs_posted", "statuses": "not 2xx: \"Post failed (<status>)\"" }
+  ],
+  "navigations": [
+    { "url": "<conv-base>/<sid>", "sent": ["js/chat_left_sidebar.js:285", "js/chat_first_topic.js:37"], "note": "after a topic is made" },
+    { "url": "<conv-base>/<sid>#msg-<id>", "sent": ["js/chat_search.js:228"], "note": "a search result in another topic; conv is the result's URL root" },
+    { "url": "/chat/c/<conv>/<sid>#msg-<id>", "sent": ["js/docs.js:108"], "note": "after a doc is posted" },
+    { "url": "/chat/docs/reading-list", "sent": ["js/chat.js:144"], "note": "the link in the saved notice" },
+    { "url": "/chat/docs/<slug>", "sent": ["js/recent.js:147"], "note": "a doc's row on Recent" },
+    { "url": "server-made", "sent": ["js/chat_left_sidebar.js:101", "js/chat_left_sidebar.js:119", "js/notify.js:65", "js/recent.js:147", "js/styles.js:74"], "note": "url, link_url and source_url are used as the server sent them" }
+  ],
+  "pages": {
+    "conversation": {
+      "elements": {
+        "chat-root": { "attributes": "page_chat_root", "read": "js/chat.js:2" },
+        "chat-notify": { "read": "js/notify.js:16", "note": "the status strip" },
+        "chat-left-sidebar": { "read": "js/chat.js:344" },
+        "chat-sidebar-data": { "script": "sidebar_data", "read": "js/chat.js:341" },
+        "chat-feed": { "read": "js/chat.js:172", "also": "js/chat_responsive.js:80" },
+        "chat-right-sidebar": { "read": "js/chat.js:354" }
+      },
+      "classes": { "chat-layout": { "read": "js/chat_responsive.js:79", "note": "the desktop column the rail goes back into, before #chat-feed" } }
+    },
+    "first_topic": {
+      "elements": { "chat-first-topic": { "attributes": "page_first_topic", "read": "js/chat_first_topic.js:12" } }
+    },
+    "recent": {
+      "elements": {
+        "recent-mount": { "read": "js/recent.js:16" },
+        "recent-data": { "script": "recent_data", "read": "js/recent.js:17" }
+      }
+    },
+    "code": {
+      "elements": {
+        "code-mount": { "read": "js/code.js:12" },
+        "code-data": { "script": "code_data", "read": "js/code.js:13" }
+      }
+    },
+    "images": {
+      "elements": {
+        "images-mount": { "read": "js/images.js:12" },
+        "images-data": { "script": "images_data", "read": "js/images.js:13" }
+      }
+    },
+    "doc": {
+      "note": "the page with no doc open has none of these, and docs.js does nothing",
+      "elements": {
+        "docs-body": { "attributes": "page_docs_body", "read": "js/docs.js:6" },
+        "docs-preview": { "read": "js/docs.js:9" },
+        "docs-status": { "read": "js/docs.js:10", "optional": true },
+        "docs-post-btn": { "read": "js/docs.js:72", "optional": true },
+        "docs-posted-dialog": { "read": "js/docs.js:73", "optional": true },
+        "docs-posted-ok": { "read": "js/docs.js:74", "optional": true }
+      }
+    },
+    "chrome": {
+      "note": "the top bar every chat page has; each piece is optional, and a page without .chat-top-left gets no drawer",
+      "elements": { "chat-theme-toggle": { "read": "js/chat_theme.js:9", "also": "js/chrome_drawer.js:125", "optional": true, "note": "an empty <button>; the client sets its glyph" } },
+      "classes": {
+        "chat-top-left": { "read": "js/chrome_drawer.js:81", "note": "the hamburger goes first in it" },
+        "app-top-user": { "read": "js/chrome_drawer.js:124", "note": "`.app-top-user strong` is the viewer's name (js/chrome_drawer.js:100); its <a>s are the account links (js/chrome_drawer.js:116)" },
+        "chat-top-links": { "read": "js/chrome_drawer.js:108", "note": "its <a>s and <strong> are the section nav" }
+      }
+    }
+  },
+  "client_made": {
+    "note": "ids and data-* attributes the client makes and reads itself, so no server sends them",
+    "ids": ["chat-empty", "favicon", "chrome-drawer-extra", "recent-style", "chat-compose-body", "chat-form", "chat-body", "chat-upload-btn", "chat-file", "chat-status"],
+    "attributes": ["data-sid", "data-uid", "data-section", "data-src", "data-i", "data-id", "data-mv-idx", "data-emoji", "data-source-id", "data-key", "data-ts", "data-just-dragged", "data-theme"]
+  },
+  "markup": {
+    "about": "The HTML in a message frame's `html`, as the server renders markdown. The client styles it (one stylesheet, js/message.js:66) and routes clicks on it (js/message.js:144).",
+    "items": [
+      { "element": "a.msg-ref", "server": "<a href=\"#msg-<id>\" class=\"msg-ref\">MSG_<id></a>", "read": ["js/message.js:148", "js/chat.js:157"], "css": ".chat-body a.msg-ref", "effect": "a click navigates in the page: the bubble when <id> is in the open topic, else /chat/msg/<id> in a new tab", "plant": [["class=\"msg-ref\"", "class=\"ref\""]] },
+      { "element": "a.msg-ref href", "server": "#msg-<sid>_<n>: the topic is what comes before the last underscore", "read": ["js/chat.js:157", "js/chat.js:159"], "plant": [["href=\"#msg-ideas_4\"", "href=\"#msg-ideas4\""]] },
+      { "element": "pre", "server": "<pre><code class=\"language-<lang>\">…</code></pre> for a fence", "read": ["js/message.js:146"], "css": ".chat-body pre", "effect": "a click opens the code popup with its text", "plant": [["<pre><code", "<div><code"], ["</code></pre>", "</code></div>"]] },
+      { "element": "pre.chat-quote", "server": "<pre class=\"chat-quote\">…</pre> for a ~~~ quote fence", "read": ["js/message.js:101"], "css": ".chat-body pre.chat-quote", "effect": "styled as a quote; a click opens the code popup as any <pre>" },
+      { "element": "img", "server": "<img src alt [width height]>", "read": ["js/message.js:145"], "css": ".chat-body img", "effect": "a click opens the image popup at its src", "plant": [["<img ", "<span "]] },
+      { "element": "video", "server": "<video src controls>", "read": ["js/message.js:116"], "css": ".chat-body video", "effect": "styled only" },
+      { "element": "a[target=_blank]", "server": "an external link carries target=\"_blank\" rel=\"noopener\"", "read": ["js/message.js:150", "js/message.js:245"], "effect": "the client leaves the click to the browser, so the server's target opens it in a new tab", "plant": [] },
+      { "element": "p", "server": "paragraphs", "read": ["js/message.js:91"], "css": ".chat-body p:first-child", "effect": "styled only" }
+    ]
+  }
+}
