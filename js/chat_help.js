@@ -41,7 +41,7 @@ window.ChatHelp = (function(){
       { key: 'd', label: 'download transcript + images (.tar.gz)', requiresSelection: false, action: function(){ deps.downloadBundle(); } },
       { key: 'e', label: 'edit selected message',               requiresSelection: true,  action: function(s){ deps.editMessage(s); } },
       { key: 'f', label: 'forward',                             requiresSelection: false, action: function(){ deps.forward(); } },
-      { key: 'q', label: 'quote-reply to selected message',     requiresSelection: true,  action: function(s){ deps.quoteReply(s); } },
+      { key: 'q', label: 'quote-reply to selected message (or >)', requiresSelection: true,  action: function(s){ deps.quoteReply(s); } },
       { key: 'r', label: 'refer (drop a "See MSG_…" link)',     requiresSelection: true,  action: function(s){ deps.referReply(s); } },
       { key: 's', label: 'save selected message to your reading list', requiresSelection: true, action: function(s){ deps.save(s); } },
       { key: 't', label: 'open the raw transcript in a new tab', requiresSelection: false, action: function(){ deps.viewRaw(); } },
@@ -91,6 +91,7 @@ window.ChatHelp = (function(){
     var entries = shortcuts(deps);
     var byKey = Object.create(null);
     entries.forEach(function(entry){ byKey[entry.key] = entry; });
+    byKey['>'] = byKey['q'];  // Zulip's quote key, for the muscle memory
 
     /* The rail's closed panel, from ChatRightSidebar.init (157(e)). */
     if(!deps.rail || !deps.rail.closedPanel) throw new Error('ChatHelp.init: no rail (ChatRightSidebar.init returns it)');
