@@ -1,7 +1,8 @@
 const std = @import("std");
 
 // `zig build test` checks the table; `node tools/test_chat_resize.mjs` tests
-// the photo resize.
+// the photo resize, and `node tools/test_contract.mjs` the contract with the
+// server (CONTRACT.md).
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
