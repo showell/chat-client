@@ -1,15 +1,13 @@
 /* ChatMiddlePane — the bubble-feed column.
 
-   Owns its entire DOM + styling: wrapper, navbar with Back/Forward
-   buttons, the scrollable history surface, the inner bubble list.
-   Owns MessageView + NavStack internally; the back/forward buttons
-   are local to this widget — chat.js doesn't see them.
+   Owns its entire DOM + styling: wrapper, a navbar above the feed, the
+   scrollable history surface, the inner bubble list. Owns MessageView
+   internally. The navbar holds no button of its own: it is the strip
+   siblings put their buttons in (chat_search's 🔍).
 
    Caller supplies a mount element (the layout slot where this column
    lives) and a renderBubble that builds one bubble from one message.
-   The returned API mirrors MessageView's verbs plus back()/forward()
-   plus a navbar handle for siblings that want to inject their own
-   buttons (chat_search's 🔍). */
+   The returned API mirrors MessageView's verbs plus the navbar handle. */
 window.ChatMiddlePane = (function(){
   'use strict';
 
@@ -22,7 +20,6 @@ window.ChatMiddlePane = (function(){
        el.style. The rest of the column's styling is inline. */
     s.textContent =
         '.chat-mp-btn:hover:enabled { background:var(--cc-soft-border); }'
-      + '.chat-mp-btn:disabled { opacity:0.4; cursor:default; }'
       + '.chat-mp-history:focus { outline:none; }'
       + '@media (orientation: landscape) { .chat-mp-main { flex:1; } }';
     document.head.appendChild(s);
@@ -58,20 +55,6 @@ window.ChatMiddlePane = (function(){
     var navbar = document.createElement('div');
     Object.assign(navbar.style, { marginBottom:'8px' });
 
-    var backBtn = makeNavButton({
-      title: 'Back to the previous selection (b)',
-      html:  '&larr;',
-    });
-    backBtn.disabled = true;
-    var fwdBtn = makeNavButton({
-      title: 'Forward — redo a Back (f)',
-      html:  '&rarr;',
-    });
-    fwdBtn.disabled = true;
-    fwdBtn.style.marginLeft = '4px';
-    navbar.appendChild(backBtn);
-    navbar.appendChild(fwdBtn);
-
     var history = document.createElement('div');
     history.className = 'chat-mp-history';
     history.tabIndex = -1;
@@ -87,8 +70,6 @@ window.ChatMiddlePane = (function(){
     main.appendChild(navbar);
     main.appendChild(history);
 
-    var nav;
-
     var view = MessageView.create({
       container:    history,
       list:         bubbles,
@@ -101,17 +82,8 @@ window.ChatMiddlePane = (function(){
       setSelectedBubble: function(idx){
         if(idx<=0) return;
         onSelect(idx);
-        nav.push(idx);
       },
     });
-
-    nav = NavStack.create({
-      gotoMessage:      function(idx){ view.focusBubble(idx, {silent:true}); },
-      onChange:         function(canBack, canFwd){ backBtn.disabled=!canBack; fwdBtn.disabled=!canFwd; },
-      currentSelection: view.getSelected,
-    });
-    backBtn.addEventListener('click', nav.back);
-    fwdBtn.addEventListener('click', nav.forward);
 
     function caughtUp(){
       var els = bubbles.querySelectorAll('[data-i]');
@@ -128,8 +100,6 @@ window.ChatMiddlePane = (function(){
       startBacklog:    view.startBacklog,
       endBacklog:      view.endBacklog,
       caughtUp:        caughtUp,
-      back:            nav.back,
-      forward:         nav.forward,
       navbar:          navbar,
       bubbles:         bubbles,
       focus:           function(){ history.focus({preventScroll:true}); },

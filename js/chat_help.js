@@ -36,13 +36,10 @@ window.ChatHelp = (function(){
   // lint:called-once keymap-source-of-truth
   function shortcuts(deps){
     return [
-      { key: 'b', label: 'back',                                requiresSelection: false, action: function(){ deps.back(); } },
       { key: 'c', label: 'compose',                             requiresSelection: false, action: function(){ deps.openCompose(); } },
       { key: 'd', label: 'download transcript + images (.tar.gz)', requiresSelection: false, action: function(){ deps.downloadBundle(); } },
       { key: 'e', label: 'edit selected message',               requiresSelection: true,  action: function(s){ deps.editMessage(s); } },
-      { key: 'f', label: 'forward',                             requiresSelection: false, action: function(){ deps.forward(); } },
-      { key: 'q', label: 'quote-reply to selected message (or >)', requiresSelection: true,  action: function(s){ deps.quoteReply(s); } },
-      { key: 'r', label: 'refer (drop a "See MSG_…" link)',     requiresSelection: true,  action: function(s){ deps.referReply(s); } },
+      { key: 'q', label: 'quote-reply to selected message (q, r, or >)', requiresSelection: true,  action: function(s){ deps.quoteReply(s); } },
       { key: 's', label: 'save selected message to your reading list', requiresSelection: true, action: function(s){ deps.save(s); } },
       { key: 't', label: 'open the raw transcript in a new tab', requiresSelection: false, action: function(){ deps.viewRaw(); } },
       { key: '/', label: 'search every topic',                  requiresSelection: false, action: function(){ ChatSearch.open(); } },
@@ -91,6 +88,7 @@ window.ChatHelp = (function(){
     var entries = shortcuts(deps);
     var byKey = Object.create(null);
     entries.forEach(function(entry){ byKey[entry.key] = entry; });
+    byKey['r'] = byKey['q'];  // r replies, as q does
     byKey['>'] = byKey['q'];  // Zulip's quote key, for the muscle memory
 
     /* The rail's closed panel, from ChatRightSidebar.init (157(e)). */

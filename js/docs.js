@@ -104,7 +104,7 @@
       dlg.close();
       if(convAfter && sessionAfter){
         /* PRODUCT_DECISION: #msg-<id> matches MSG_<session>_<n>; chat.js's
-           wantFocus path scrolls + selects + pushes to back/forward. */
+           wantFocus path scrolls + selects. */
         var url='/chat/c/'+encodeURIComponent(convAfter)+'/'+encodeURIComponent(sessionAfter);
         if(idAfter) url += '#msg-'+idAfter;
         location.href=url;

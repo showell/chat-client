@@ -254,13 +254,13 @@ window.ChatSearch = (function(){
     sessionBase = deps.sessionBase;
     /* PRODUCT_DECISION: ChatSearch owns its own trigger end-to-end —
        creates the 🔍 button, styles it to match the navbar via
-       ChatMiddlePane's helper, drops it next to back/fwd. The navbar
-       doesn't know about search; it just lent us a slot. */
+       ChatMiddlePane's helper, and puts it in the navbar above the feed,
+       where it is the only button. The navbar doesn't know about search;
+       it just lent us a slot. */
     var searchBtn = ChatMiddlePane.makeNavButton({
       label: '🔍',
       title: 'Search every topic (/)',
     });
-    searchBtn.style.marginLeft = '4px';
     searchBtn.addEventListener('click', openSearchModal);
     deps.navbar.appendChild(searchBtn);
   }

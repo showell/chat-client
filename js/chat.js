@@ -21,7 +21,7 @@
      PRODUCT_DECISION: chat.js holds the SSE records as plain data
      (`records`), and the corresponding Message widgets (`messages`) in
      the same order. Records are what every domain action reads — quote,
-     refer, edit, search, navigateRef, onSelect, finishBacklog — because
+     edit, search, navigateRef, onSelect, finishBacklog — because
      the data lives there. Message widgets only own the bubble DOM +
      click routing + in-place supersession; their public API is just
      {render, markEdited, setSaved, getElement}. byId indexes both arrays by
@@ -52,7 +52,7 @@
   loadSavedSet();
 
   /* ===== domain actions (called from Message clicks AND ChatHelp keys) =====
-     PRODUCT_DECISION: doQuote/doRefer/doEdit/navigateRef call pane.focusBubble,
+     PRODUCT_DECISION: doQuote/doEdit/navigateRef call pane.focusBubble,
      which is captured by closure from the var pane below. The actions are
      CALLED later (from Message instances built inside the pane's renderBubble
      callback), so the forward reference is safe. */
@@ -77,12 +77,6 @@
       'In MSG_'+rec.id+' '+(rec.mine?'I said':'you said')+
       ':\n'+fence+' quote\n'+rec.markdown+'\n'+fence+'\n\n'
     );
-  }
-  function doRefer(rec){
-    if(ChatCompose.isPending()) return;
-    pane.focusBubble(rec.index + 1);
-    ChatRightSidebar.openCompose();
-    ChatCompose.insertAtCursor('See MSG_'+rec.id+' ');
   }
   /* PRODUCT_DECISION: Edit composes a NEW message with an "Edit of MSG_<hash>"
      backlink and the caret at the start of the original markdown. Append-only +
@@ -167,14 +161,13 @@
     window.open('/chat/msg/'+encodeURIComponent(id), '_blank');
   }
 
-  /* ===== middle pane — owns wrapper + navbar + back/fwd + history + bubbles ===== */
+  /* ===== middle pane — owns wrapper + navbar + history + bubbles ===== */
   pane = ChatMiddlePane.init({
     mount: document.getElementById('chat-feed'),
     renderBubble: function(idx, m){
       m.saved = savedIds.has(m.id); /* initial indicator state, kept in sync via setSaved */
       var msg = Message.create(m, {
         onQuote:  doQuote,
-        onRefer:  doRefer,
         onEdit:   doEdit,
         onSave:   doSave,
         onReact:  doReact,
@@ -371,14 +364,11 @@
   ChatHelp.init({
     rail:        rail,
     openCompose: ChatRightSidebar.openCompose,
-    back:        pane.back,
-    forward:     pane.forward,
     getSelectedMessage: function(){
       var idx=pane.getSelected();
       return idx>0 ? records[idx-1] : null;
     },
     quoteReply:  doQuote,
-    referReply:  doRefer,
     editMessage: doEdit,
     save:        doSave,
     pickReaction: doPickReaction,

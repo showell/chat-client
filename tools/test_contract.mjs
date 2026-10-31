@@ -279,7 +279,7 @@ async function chatPage(o = {}) {
     const bubbles = d.querySelectorAll('.chat-msg');
     for (const b of bubbles) for (const x of b.querySelectorAll('.chat-body *, .chat-react-chip')) x.userClick();
     const last = bubbles[bubbles.length - 1];
-    for (const s of ['.chat-time', '.msg-quote', '.msg-refer', '.msg-edit', '.msg-save']) { const x = last && last.querySelector(s); if (x) x.userClick(); }
+    for (const s of ['.chat-time', '.msg-quote', '.msg-edit', '.msg-save']) { const x = last && last.querySelector(s); if (x) x.userClick(); }
     await flush();
     if (w.help) { w.help.viewRaw(); w.help.downloadBundle(); }
   }

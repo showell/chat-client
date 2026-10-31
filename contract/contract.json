@@ -17,12 +17,12 @@
           "data-conv": { "type": "string", "required": true, "read": ["js/chat.js:3", "js/notify.js:52"], "note": "the conversation key: the DM pair (\"1_2\") or the channel name" },
           "data-session": { "type": "string", "required": true, "read": ["js/chat.js:4", "js/notify.js:52"], "note": "the open topic's id" },
           "data-conv-base": { "type": "string", "required": true, "read": ["js/chat.js:9"], "note": "the conversation's URL root; every per-topic URL is built on it" },
-          "data-me": { "type": "string", "required": true, "read": ["js/chat.js:16", "js/chat.js:224"], "note": "the viewer's account id; a message is mine when its from_uid is this, and a reaction is mine when its uid is" },
+          "data-me": { "type": "string", "required": true, "read": ["js/chat.js:16", "js/chat.js:217"], "note": "the viewer's account id; a message is mine when its from_uid is this, and a reaction is mine when its uid is" },
           "data-me-name": { "type": "string", "required": true, "read": ["js/chat.js:17"], "note": "the viewer's name; decides `mine` for a message with no from_uid" },
-          "data-search-min": { "type": "string", "pattern": "^[1-9][0-9]*$", "required": true, "read": ["js/chat.js:327"], "note": "the shortest word search looks up, in UTF-8 bytes; ChatSearch.init throws without it" },
-          "data-upload-image-max": { "type": "string", "pattern": "^[1-9][0-9]*$", "required": true, "read": ["js/chat.js:364"], "note": "the image cap in bytes; ChatCompose.init throws without it" },
-          "data-upload-video-max": { "type": "string", "pattern": "^[1-9][0-9]*$", "required": true, "read": ["js/chat.js:365"], "note": "the video cap in bytes; ChatCompose.init throws without it" },
-          "data-upload-accept": { "type": "string", "required": true, "read": ["js/chat.js:366"], "note": "the file picker's accept list; ChatCompose.init throws without it" }
+          "data-search-min": { "type": "string", "pattern": "^[1-9][0-9]*$", "required": true, "read": ["js/chat.js:320"], "note": "the shortest word search looks up, in UTF-8 bytes; ChatSearch.init throws without it" },
+          "data-upload-image-max": { "type": "string", "pattern": "^[1-9][0-9]*$", "required": true, "read": ["js/chat.js:357"], "note": "the image cap in bytes; ChatCompose.init throws without it" },
+          "data-upload-video-max": { "type": "string", "pattern": "^[1-9][0-9]*$", "required": true, "read": ["js/chat.js:358"], "note": "the video cap in bytes; ChatCompose.init throws without it" },
+          "data-upload-accept": { "type": "string", "required": true, "read": ["js/chat.js:359"], "note": "the file picker's accept list; ChatCompose.init throws without it" }
         }
       },
       "examples": [
@@ -60,7 +60,7 @@
       "examples": [{ "data-slug": "reading-list" }]
     },
     "sidebar_data": {
-      "carrier": "the inline <script type=\"application/json\" id=\"chat-sidebar-data\"> on the conversation page, parsed at js/chat.js:342 and handed to ChatLeftSidebar.init",
+      "carrier": "the inline <script type=\"application/json\" id=\"chat-sidebar-data\"> on the conversation page, parsed at js/chat.js:335 and handed to ChatLeftSidebar.init",
       "shape": {
         "type": "object",
         "fields": {
@@ -163,19 +163,19 @@
       "examples": [{ "kind": "user-online", "user_id": "3", "user_name": "Ann" }]
     },
     "message_frame": {
-      "carrier": "a `message` frame (no `event:` line) on <session-base>/stream, parsed at js/chat.js:284; the record each bubble is built from",
+      "carrier": "a `message` frame (no `event:` line) on <session-base>/stream, parsed at js/chat.js:277; the record each bubble is built from",
       "examples_note": "The driver sends all but the last example as the backlog and the last as a live message, so the last one's cid round-trips.",
       "shape": {
         "type": "object",
         "fields": {
-          "index": { "type": "integer", "required": true, "read": ["js/chat.js:216", "js/message.js:202", "js/message.js:252"], "note": "0-based position in the topic; the message number is index+1" },
-          "from": { "type": "string", "required": true, "read": ["js/chat.js:285", "js/message.js:202", "js/chat.js:123"], "note": "the author's name" },
-          "from_uid": { "type": "string", "required": false, "read": ["js/chat.js:285"], "note": "the author's account; absent on a message stored before accounts were recorded" },
-          "at": { "type": "string", "required": true, "read": ["js/message.js:205", "js/message.js:233", "js/chat.js:124"], "note": "an RFC 3339 UTC instant" },
-          "html": { "type": "string", "required": true, "read": ["js/message.js:256"], "note": "the rendered markdown, sanitized by the server; see `markup`" },
-          "markdown": { "type": "string", "required": true, "read": ["js/chat.js:217", "js/message.js:277", "js/chat.js:75"], "note": "the message as written; \"Edit of MSG_<id>\" at its start supersedes that message" },
-          "id": { "type": "string", "required": true, "read": ["js/chat.js:183", "js/message.js:251", "js/chat.js:218"], "note": "<sid>_<n>" },
-          "cid": { "type": "string", "required": false, "read": ["js/chat.js:301", "js/chat.js:311"], "note": "the sender's client id, on a live frame only; acknowledges this tab's own send" }
+          "index": { "type": "integer", "required": true, "read": ["js/chat.js:209", "js/message.js:199", "js/message.js:244"], "note": "0-based position in the topic; the message number is index+1" },
+          "from": { "type": "string", "required": true, "read": ["js/chat.js:278", "js/message.js:199", "js/chat.js:117"], "note": "the author's name" },
+          "from_uid": { "type": "string", "required": false, "read": ["js/chat.js:278"], "note": "the author's account; absent on a message stored before accounts were recorded" },
+          "at": { "type": "string", "required": true, "read": ["js/message.js:202", "js/message.js:226", "js/chat.js:118"], "note": "an RFC 3339 UTC instant" },
+          "html": { "type": "string", "required": true, "read": ["js/message.js:248"], "note": "the rendered markdown, sanitized by the server; see `markup`" },
+          "markdown": { "type": "string", "required": true, "read": ["js/chat.js:210", "js/message.js:269", "js/chat.js:75"], "note": "the message as written; \"Edit of MSG_<id>\" at its start supersedes that message" },
+          "id": { "type": "string", "required": true, "read": ["js/chat.js:176", "js/message.js:243", "js/chat.js:211"], "note": "<sid>_<n>" },
+          "cid": { "type": "string", "required": false, "read": ["js/chat.js:294", "js/chat.js:304"], "note": "the sender's client id, on a live frame only; acknowledges this tab's own send" }
         }
       },
       "examples": [
@@ -191,7 +191,7 @@
     },
     "backlog_size": {
       "carrier": "the data of an `event: backlog-size` frame on <session-base>/stream: the number of message frames that follow as the backlog, as decimal text",
-      "shape": { "type": "string", "pattern": "^[0-9]+$", "read": ["js/chat.js:270", "js/chat.js:276"], "note": "anything but a count stops the topic and says so" },
+      "shape": { "type": "string", "pattern": "^[0-9]+$", "read": ["js/chat.js:263", "js/chat.js:269"], "note": "anything but a count stops the topic and says so" },
       "examples": ["3"]
     },
     "reaction_line": {
@@ -428,11 +428,11 @@
   },
   "streams": {
     "topic": {
-      "url": "<session-base>/stream?since=0", "opened": "js/chat.js:237",
+      "url": "<session-base>/stream?since=0", "opened": "js/chat.js:230",
       "events": {
-        "backlog-size": { "data": ["backlog_size"], "read": ["js/chat.js:263"], "note": "first on every connection (and every reconnect)" },
-        "message": { "data": ["message_frame"], "read": ["js/chat.js:283"], "note": "each with `id: <index>`, which the client does not read" },
-        "reaction": { "data": ["reaction_line"], "read": ["js/chat.js:281"] }
+        "backlog-size": { "data": ["backlog_size"], "read": ["js/chat.js:256"], "note": "first on every connection (and every reconnect)" },
+        "message": { "data": ["message_frame"], "read": ["js/chat.js:276"], "note": "each with `id: <index>`, which the client does not read" },
+        "reaction": { "data": ["reaction_line"], "read": ["js/chat.js:274"] }
       }
     },
     "sidebar": {
@@ -462,14 +462,14 @@
     { "name": "react", "method": "POST", "url": "<session-base>/react", "sent": "js/chat_reactions.js:61", "form": ["msg", "emoji", "on"], "answer": "status only; the `reaction` frame repaints", "statuses": "not 2xx: \"Reaction failed\"" },
     { "name": "send", "method": "POST", "url": "<session-base>/send", "sent": "js/chat_compose.js:90", "form": ["markdown", "cid"], "headers": { "X-Chat-Async": "1" }, "answer": "status only; the message frame carrying the cid is the confirmation", "statuses": "not 2xx, or no echo in 3 s: \"The host may be down\"" },
     { "name": "upload", "method": "POST", "url": "<session-base>/upload", "sent": "js/chat_compose.js:216", "multipart": ["file"], "answer": "upload_answer", "statuses": "not 2xx: the answer's text is shown when it is short and not HTML" },
-    { "name": "topic stream", "method": "GET", "url": "<session-base>/stream?since=0", "sent": "js/chat.js:237", "answer": "stream topic" },
-    { "name": "raw transcript", "method": "GET", "url": "<session-base>/raw", "sent": "js/chat.js:388", "how": "window.open, a new tab" },
-    { "name": "download", "method": "GET", "url": "<session-base>/download", "sent": "js/chat.js:394", "how": "an <a> clicked; the server's Content-Disposition: attachment keeps the page" },
+    { "name": "topic stream", "method": "GET", "url": "<session-base>/stream?since=0", "sent": "js/chat.js:230", "answer": "stream topic" },
+    { "name": "raw transcript", "method": "GET", "url": "<session-base>/raw", "sent": "js/chat.js:378", "how": "window.open, a new tab" },
+    { "name": "download", "method": "GET", "url": "<session-base>/download", "sent": "js/chat.js:384", "how": "an <a> clicked; the server's Content-Disposition: attachment keeps the page" },
     { "name": "new topic", "method": "POST", "url": "<conv-base>/new", "sent": "js/chat_add_topic.js:71", "form": ["topic"], "answer": "topic_created", "statuses": "not 2xx: the answer's text is shown under the form" },
     { "name": "pin", "method": "POST", "url": "<conv-base>/<sid>/pin", "sent": "js/chat_drag_to_pin.js:187", "answer": "status only", "statuses": "not 2xx: the row goes back" },
     { "name": "unpin", "method": "POST", "url": "<conv-base>/<sid>/unpin", "sent": "js/chat_drag_to_pin.js:187", "answer": "status only", "statuses": "not 2xx: the row goes back" },
-    { "name": "save to reading list", "method": "POST", "url": "/chat/docs/save_to_reading_list", "sent": "js/chat.js:127", "form": ["conv", "sid", "id", "from", "at", "body", "note"], "answer": "status only", "statuses": "not 2xx: \"Save failed\"" },
-    { "name": "message elsewhere", "method": "GET", "url": "/chat/msg/<id>", "sent": "js/chat.js:167", "how": "window.open; the server redirects to the message's topic" },
+    { "name": "save to reading list", "method": "POST", "url": "/chat/docs/save_to_reading_list", "sent": "js/chat.js:121", "form": ["conv", "sid", "id", "from", "at", "body", "note"], "answer": "status only", "statuses": "not 2xx: \"Save failed\"" },
+    { "name": "message elsewhere", "method": "GET", "url": "/chat/msg/<id>", "sent": "js/chat.js:161", "how": "window.open; the server redirects to the message's topic" },
     { "name": "search words", "method": "GET", "url": "/chat/search/words?prefix=<q>", "sent": "js/chat_search.js:162", "answer": "search_words", "statuses": "a redirect (the login page) reads as 401: signed out; 429: too fast; 503: not ready; any other not 200: failed (js/chat_search.js:87-95)" },
     { "name": "search messages", "method": "GET", "url": "/chat/search/messages?word=<q>", "sent": "js/chat_search.js:197", "answer": "search_messages", "statuses": "as search words" },
     { "name": "sidebar stream", "method": "GET", "url": "/chat/sidebar/stream", "sent": "js/chat_left_sidebar.js:230", "answer": "stream sidebar" },
@@ -486,7 +486,7 @@
     { "url": "<conv-base>/<sid>", "sent": ["js/chat_left_sidebar.js:285", "js/chat_first_topic.js:37"], "note": "after a topic is made" },
     { "url": "<conv-base>/<sid>#msg-<id>", "sent": ["js/chat_search.js:228"], "note": "a search result in another topic; conv is the result's URL root" },
     { "url": "/chat/c/<conv>/<sid>#msg-<id>", "sent": ["js/docs.js:108"], "note": "after a doc is posted" },
-    { "url": "/chat/docs/reading-list", "sent": ["js/chat.js:144"], "note": "the link in the saved notice" },
+    { "url": "/chat/docs/reading-list", "sent": ["js/chat.js:138"], "note": "the link in the saved notice" },
     { "url": "/chat/docs/<slug>", "sent": ["js/recent.js:147"], "note": "a doc's row on Recent" },
     { "url": "server-made", "sent": ["js/chat_left_sidebar.js:101", "js/chat_left_sidebar.js:119", "js/notify.js:65", "js/recent.js:147", "js/styles.js:74"], "note": "url, link_url and source_url are used as the server sent them" }
   ],
@@ -495,10 +495,10 @@
       "elements": {
         "chat-root": { "attributes": "page_chat_root", "read": "js/chat.js:2" },
         "chat-notify": { "read": "js/notify.js:16", "note": "the status strip" },
-        "chat-left-sidebar": { "read": "js/chat.js:344" },
-        "chat-sidebar-data": { "script": "sidebar_data", "read": "js/chat.js:341" },
-        "chat-feed": { "read": "js/chat.js:172", "also": "js/chat_responsive.js:80" },
-        "chat-right-sidebar": { "read": "js/chat.js:354" }
+        "chat-left-sidebar": { "read": "js/chat.js:337" },
+        "chat-sidebar-data": { "script": "sidebar_data", "read": "js/chat.js:334" },
+        "chat-feed": { "read": "js/chat.js:166", "also": "js/chat_responsive.js:80" },
+        "chat-right-sidebar": { "read": "js/chat.js:347" }
       },
       "classes": { "chat-layout": { "read": "js/chat_responsive.js:79", "note": "the desktop column the rail goes back into, before #chat-feed" } }
     },
@@ -550,16 +550,16 @@
     "attributes": ["data-sid", "data-uid", "data-section", "data-src", "data-i", "data-id", "data-mv-idx", "data-emoji", "data-source-id", "data-key", "data-ts", "data-just-dragged", "data-theme"]
   },
   "markup": {
-    "about": "The HTML in a message frame's `html`, as the server renders markdown. The client styles it (one stylesheet, js/message.js:66) and routes clicks on it (js/message.js:144).",
+    "about": "The HTML in a message frame's `html`, as the server renders markdown. The client styles it (one stylesheet, js/message.js:64) and routes clicks on it (js/message.js:142).",
     "items": [
-      { "element": "a.msg-ref", "server": "<a href=\"#msg-<id>\" class=\"msg-ref\">MSG_<id></a>", "read": ["js/message.js:148", "js/chat.js:157"], "css": ".chat-body a.msg-ref", "effect": "a click navigates in the page: the bubble when <id> is in the open topic, else /chat/msg/<id> in a new tab", "plant": [["class=\"msg-ref\"", "class=\"ref\""]] },
-      { "element": "a.msg-ref href", "server": "#msg-<sid>_<n>: the topic is what comes before the last underscore", "read": ["js/chat.js:157", "js/chat.js:159"], "plant": [["href=\"#msg-ideas_4\"", "href=\"#msg-ideas4\""]] },
-      { "element": "pre", "server": "<pre><code class=\"language-<lang>\">…</code></pre> for a fence", "read": ["js/message.js:146"], "css": ".chat-body pre", "effect": "a click opens the code popup with its text", "plant": [["<pre><code", "<div><code"], ["</code></pre>", "</code></div>"]] },
-      { "element": "pre.chat-quote", "server": "<pre class=\"chat-quote\">…</pre> for a ~~~ quote fence", "read": ["js/message.js:101"], "css": ".chat-body pre.chat-quote", "effect": "styled as a quote; a click opens the code popup as any <pre>" },
-      { "element": "img", "server": "<img src alt [width height]>", "read": ["js/message.js:145"], "css": ".chat-body img", "effect": "a click opens the image popup at its src", "plant": [["<img ", "<span "]] },
-      { "element": "video", "server": "<video src controls>", "read": ["js/message.js:116"], "css": ".chat-body video", "effect": "styled only" },
-      { "element": "a[target=_blank]", "server": "an external link carries target=\"_blank\" rel=\"noopener\"", "read": ["js/message.js:150", "js/message.js:245"], "effect": "the client leaves the click to the browser, so the server's target opens it in a new tab", "plant": [] },
-      { "element": "p", "server": "paragraphs", "read": ["js/message.js:91"], "css": ".chat-body p:first-child", "effect": "styled only" }
+      { "element": "a.msg-ref", "server": "<a href=\"#msg-<id>\" class=\"msg-ref\">MSG_<id></a>", "read": ["js/message.js:146", "js/chat.js:151"], "css": ".chat-body a.msg-ref", "effect": "a click navigates in the page: the bubble when <id> is in the open topic, else /chat/msg/<id> in a new tab", "plant": [["class=\"msg-ref\"", "class=\"ref\""]] },
+      { "element": "a.msg-ref href", "server": "#msg-<sid>_<n>: the topic is what comes before the last underscore", "read": ["js/chat.js:151", "js/chat.js:153"], "plant": [["href=\"#msg-ideas_4\"", "href=\"#msg-ideas4\""]] },
+      { "element": "pre", "server": "<pre><code class=\"language-<lang>\">…</code></pre> for a fence", "read": ["js/message.js:144"], "css": ".chat-body pre", "effect": "a click opens the code popup with its text", "plant": [["<pre><code", "<div><code"], ["</code></pre>", "</code></div>"]] },
+      { "element": "pre.chat-quote", "server": "<pre class=\"chat-quote\">…</pre> for a ~~~ quote fence", "read": ["js/message.js:99"], "css": ".chat-body pre.chat-quote", "effect": "styled as a quote; a click opens the code popup as any <pre>" },
+      { "element": "img", "server": "<img src alt [width height]>", "read": ["js/message.js:143"], "css": ".chat-body img", "effect": "a click opens the image popup at its src", "plant": [["<img ", "<span "]] },
+      { "element": "video", "server": "<video src controls>", "read": ["js/message.js:114"], "css": ".chat-body video", "effect": "styled only" },
+      { "element": "a[target=_blank]", "server": "an external link carries target=\"_blank\" rel=\"noopener\"", "read": ["js/message.js:148", "js/message.js:237"], "effect": "the client leaves the click to the browser, so the server's target opens it in a new tab", "plant": [] },
+      { "element": "p", "server": "paragraphs", "read": ["js/message.js:89"], "css": ".chat-body p:first-child", "effect": "styled only" }
     ]
   }
 }

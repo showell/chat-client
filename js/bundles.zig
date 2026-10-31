@@ -17,7 +17,6 @@ pub const bundles = [_]Bundle{
     .{ .name = "chat_save_popup.js", .body = @embedFile("chat_save_popup.js") },
     .{ .name = "message.js", .body = @embedFile("message.js") },
     .{ .name = "message_view.js", .body = @embedFile("message_view.js") },
-    .{ .name = "nav_stack.js", .body = @embedFile("nav_stack.js") },
     .{ .name = "middle_pane.js", .body = @embedFile("middle_pane.js") },
     .{ .name = "chat_search.js", .body = @embedFile("chat_search.js") },
     .{ .name = "chat_drag_to_pin.js", .body = @embedFile("chat_drag_to_pin.js") },

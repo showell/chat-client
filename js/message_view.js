@@ -36,7 +36,6 @@
    - Render bubble content (caller's renderBubble does that)
    - Classify clicks (caller's onClick decides image-zoom / msg-ref / etc.)
    - Track domain identifiers (caller maps wantFocusID → idx itself)
-   - Manage a nav-stack / back-forward (caller's domain feature)
 
    Usage sketch (chat.js could do roughly this if we wired it up):
 
@@ -50,7 +49,7 @@
          // ... meta + body construction ...
          return div;
        },
-       setSelectedBubble: function(idx){ updateHash(); updateNav(); },
+       setSelectedBubble: function(idx){ updateHash(); },
        onClick: function(idx, e){
          var hit = hitInBody(e.target);
          if(hit.kind === 'msgref'){ navigateRef(hit.el); return; }
@@ -123,22 +122,19 @@ window.MessageView = (function(){
 
     /* ---- selection ---- */
 
-    function applySelection(idx){
-      if(selected > 0 && els[selected - 1]) els[selected - 1].classList.remove('mv-selected');
-      selected = idx;
-      if(selected > 0) els[selected - 1].classList.add('mv-selected');
-    }
     /* PRODUCT_DECISION: selection visual ALWAYS applies immediately; only the
-       caller's setSelectedBubble callback (URL hash + nav-stack push) honors
+       caller's setSelectedBubble callback (the URL hash) honors
        the debounce. Holding ArrowUp must walk the cursor one bubble per
        keypress — debouncing the visible selection makes a burst land on the
        FINAL keypress's target as a single step instead of stepping through.
        The 700ms rest is the "I've found something important, record it"
-       signal for the nav stack, not a brake on the cursor itself. */
+       signal for the URL hash, not a brake on the cursor itself. */
     function settle(idx, immediate){
       if(inBacklog) return; /* PRODUCT_DECISION: batch mode skips all settles — endBacklog does the final one. */
       if(settleTimer){ clearTimeout(settleTimer); settleTimer = null; }
-      applySelection(idx);
+      if(selected > 0 && els[selected - 1]) els[selected - 1].classList.remove('mv-selected');
+      selected = idx;
+      if(selected > 0) els[selected - 1].classList.add('mv-selected');
       pendingIdx = idx;
       if(immediate){
         setSelectedBubble(idx);
@@ -212,12 +208,10 @@ window.MessageView = (function(){
 
     /* ---- click ---- */
     /* PRODUCT_DECISION: container listener runs in CAPTURE phase so the
-       clicked-on bubble lands on the nav stack BEFORE the bubble's own
-       handler routes the click (popup, msg-ref jump, external link,
-       quote/refer/edit). A subsequent msg-ref jump then pushes the
-       target on top — back walks target → source naturally.
-       NavStack.push dedupes consecutive same-entry pushes, so a
-       second click on the same bubble is a no-op on the stack. */
+       clicked-on bubble is selected BEFORE the bubble's own handler
+       routes the click (popup, msg-ref jump, external link,
+       quote/edit). A msg-ref jump then selects its target after it,
+       so the target is the selection that stands. */
     container.addEventListener('click', function(e){
       if(inBacklog) return;
       var bubble = e.target.closest && e.target.closest('[data-mv-idx]');
@@ -339,20 +333,12 @@ window.MessageView = (function(){
     }
 
     /* PRODUCT_DECISION: scroll a bubble to view-center (the "deep navigation
-       arriving at this message" pattern). silent=true cancels any pending
-       settle and applies the class only, no setSelectedBubble fire — used
-       by back/forward walks that shouldn't record on the nav stack. */
-    function focusBubble(idx, opts){
-      opts = opts || {};
+       arriving at this message" pattern) and select it. */
+    function focusBubble(idx){
       if(idx < 1 || idx > els.length) return;
       var el = els[idx - 1];
       armedScroll(function(){ centerInContainer(el); });
-      if(opts.silent){
-        if(settleTimer){ clearTimeout(settleTimer); settleTimer = null; }
-        applySelection(idx);
-      } else {
-        settle(idx, true);
-      }
+      settle(idx, true);
     }
 
     /* ---- backlog batch mode ---- */

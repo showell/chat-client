@@ -51,8 +51,7 @@ The design is "workhorse, edges and substrate":
 - **The edges:** self-contained widgets that each own their DOM and CSS,
   such as search, compose, the sidebars and help.
 - **The substrate:** shared pieces that self-style, so they drop into other
-  pages. They include `message.js`, `message_view.js`, `nav_stack.js` and the
-  popups.
+  pages. They include `message.js`, `message_view.js` and the popups.
 
 The history before this repository is angry-gopher's (`chat/*.js`); it was
 split out with `git filter-branch`, so `git log --follow` reaches back

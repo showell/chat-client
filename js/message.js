@@ -18,13 +18,12 @@
      image / pre inside body  → ChatImagePopup.show / ChatCodePopup.show
      msg-ref link inside body → deps.onMsgRef(linkEl)    (domain navigation)
      quote-reply button       → deps.onQuote(record)     (affects compose)
-     refer button             → deps.onRefer(record)     (affects compose)
      edit button              → deps.onEdit(record)      (affects compose)
      save button              → deps.onSave(record)      (save to reading list)
      reaction chip            → deps.onReact(record, emoji)  (toggle my reaction)
      external <a> / plain     → no-op (browser default + bubble up)
 
-   The record passed to onQuote/onRefer/onEdit is the same SSE payload
+   The record passed to onQuote/onEdit is the same SSE payload
    handed to create() — bubble actions are data, not DOM. The widget
    doesn't expose getters; if the caller needs id / markdown / mine,
    it reads them off the record directly.
@@ -36,7 +35,6 @@
 
      var msg = Message.create(rec, {
        onQuote:  function(r){ if(!ChatCompose.isPending()) doQuote(r); },
-       onRefer:  function(r){ if(!ChatCompose.isPending()) doRefer(r); },
        onEdit:   function(r){ if(!ChatCompose.isPending()) doEdit(r); },
        onMsgRef: function(link){ navigateRef(link); },
      });
@@ -76,10 +74,10 @@ window.Message = (function(){
       + '.chat-msg.theirs { background:var(--cc-theirs-bg); margin-right:auto; }'
       /* Meta line + action buttons. */
       + '.chat-meta { font-size:11px; color:var(--cc-muted-fg); margin-bottom:3px; }'
-      + '.chat-meta .msg-quote, .chat-meta .msg-refer, .chat-meta .msg-edit, .chat-meta .msg-save {'
+      + '.chat-meta .msg-quote, .chat-meta .msg-edit, .chat-meta .msg-save {'
       +   ' font-size:10px; color:var(--cc-muted-fg); background:none; border:none;'
       +   ' padding:0 2px; cursor:pointer; text-decoration:underline; }'
-      + '.chat-meta .msg-quote:hover, .chat-meta .msg-refer:hover, .chat-meta .msg-edit:hover, .chat-meta .msg-save:hover {'
+      + '.chat-meta .msg-quote:hover, .chat-meta .msg-edit:hover, .chat-meta .msg-save:hover {'
       +   ' color:var(--cc-accent); }'
       /* Already-in-your-reading-list: a green status (still clickable to re-save). */
       + '.chat-meta .msg-save.saved { color:var(--cc-saved-fg); text-decoration:none; }'
@@ -177,7 +175,6 @@ window.Message = (function(){
     ensureStyles();
     deps = deps || {};
     var onQuote  = deps.onQuote  || function(){};
-    var onRefer  = deps.onRefer  || function(){};
     var onEdit   = deps.onEdit   || function(){};
     var onSave   = deps.onSave   || function(){};
     var onReact  = deps.onReact  || function(){};
@@ -209,10 +206,6 @@ window.Message = (function(){
       quote.title='Quote this message in a reply (q)'; quote.textContent='quote-reply';
       meta.appendChild(quote);
       meta.appendChild(document.createTextNode(' '));
-      var refer=document.createElement('button'); refer.type='button'; refer.className='msg-refer';
-      refer.title='Drop a "See MSG_…" reference into the compose box without quoting (r)'; refer.textContent='refer';
-      meta.appendChild(refer);
-      meta.appendChild(document.createTextNode(' '));
       var edit=document.createElement('button'); edit.type='button'; edit.className='msg-edit';
       edit.title='Load this message back into compose with an "Edit of MSG_…" backlink (e)'; edit.textContent='edit';
       meta.appendChild(edit);
@@ -226,13 +219,12 @@ window.Message = (function(){
     /* PRODUCT_DECISION: one listener per bubble. The walk-up classification
        happens inside the handler; never stops propagation, so a container
        listener (e.g. MessageView) still sees the click for its own purposes
-       (selection update). Quote/refer/edit hand the record (data) up — the
+       (selection update). Quote/edit hand the record (data) up — the
        caller reads id / markdown / mine off it. */
     function handleClick(e){
       var t = e.target;
       if(t.closest && t.closest('.chat-time')){ ChatTimePopup.show(data.at); return; }
       if(t.closest && t.closest('.msg-quote')){ onQuote(data); return; }
-      if(t.closest && t.closest('.msg-refer')){ onRefer(data); return; }
       if(t.closest && t.closest('.msg-edit')){  onEdit(data);  return; }
       if(t.closest && t.closest('.msg-save')){  onSave(data);  return; }
       var chip = t.closest && t.closest('.chat-react-chip');
