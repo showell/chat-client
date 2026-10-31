@@ -206,10 +206,14 @@ window.Message = (function(){
       quote.title='Quote this message in a reply (q)'; quote.textContent='quote-reply';
       meta.appendChild(quote);
       meta.appendChild(document.createTextNode(' '));
-      var edit=document.createElement('button'); edit.type='button'; edit.className='msg-edit';
-      edit.title='Load this message back into compose with an "Edit of MSG_…" backlink (e)'; edit.textContent='edit';
-      meta.appendChild(edit);
-      meta.appendChild(document.createTextNode(' '));
+      /* PRODUCT_DECISION: edit only one's own message; another's edit
+         would not apply (chat.js's sameAuthor). */
+      if(data.mine){
+        var edit=document.createElement('button'); edit.type='button'; edit.className='msg-edit';
+        edit.title='Load this message back into compose with an "Edit of MSG_…" backlink (e)'; edit.textContent='edit';
+        meta.appendChild(edit);
+        meta.appendChild(document.createTextNode(' '));
+      }
       saveBtn=document.createElement('button'); saveBtn.type='button'; saveBtn.className='msg-save';
       saveBtn.title='Save this message to your reading list (s)';
       meta.appendChild(saveBtn);

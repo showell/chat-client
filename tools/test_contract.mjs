@@ -244,7 +244,7 @@ async function chatPage(o = {}) {
         append(m) { n++; bubbles.appendChild(deps.renderBubble(n, m)); },
         startBacklog: rec(w, 'pane.startBacklog'), endBacklog: rec(w, 'pane.endBacklog'),
         caughtUp: () => true, cursorToExtreme: rec(w, 'pane.cursorToExtreme'),
-        focusBubble: rec(w, 'pane.focusBubble'), focus() {}, back() {}, forward() {}, getSelected: () => 0,
+        focusBubble: rec(w, 'pane.focusBubble'), focus() {}, getSelected: () => 0,
       };
     },
   };
@@ -515,14 +515,18 @@ const CHECKS = {
     hasNot(r.notify.obs, 'Claude: hi', 'notify drops a ping about the open topic (data-conv, data-session)');
   },
   message_frame: (r) => {
-    assert.equal(r.d.querySelectorAll('.chat-msg').length, 4, 'four bubbles');
+    assert.equal(r.d.querySelectorAll('.chat-msg').length, 5, 'five bubbles');
     has(r.obs, 'class="chat-msg mine" id="msg-plans_1" data-i="0" data-id="plans_1"', 'mine by from_uid, under the name it had then');
     has(r.obs, 'class="chat-msg theirs" id="msg-plans_2"', 'theirs by from_uid');
     has(r.obs, '#1 Steve H · ', 'the meta line numbers it and names its author');
-    has(r.obs, 'Edited in <a class="msg-ref" href="#msg-plans_4">MSG_plans_4</a>', 'an "Edit of MSG_" supersedes the original');
-    has(r.obs, '✓ your message was sent to plans_4', 'a live frame with this tab\'s cid is acknowledged');
+    has(r.obs, 'Edited in <a class="msg-ref" href="#msg-plans_4">MSG_plans_4</a>', 'its author\'s "Edit of MSG_" supersedes the original');
+    hasNot(r.obs, 'href="#msg-plans_5">MSG_plans_5</a>', 'an "Edit of MSG_" by someone else supersedes nothing');
+    has(r.d.querySelector('#msg-plans_5 .chat-body').innerHTML, '<p>Hello</p>', 'someone else\'s "Edit of MSG_" is an ordinary message');
+    assert.ok(r.d.querySelector('#msg-plans_1 .msg-edit'), 'one\'s own message has an edit button');
+    assert.ok(!r.d.querySelector('#msg-plans_2 .msg-edit'), 'another\'s message has no edit button');
+    has(r.obs, '✓ your message was sent to plans_5', 'a live frame with this tab\'s cid is acknowledged');
     has(r.obs, '<pre class="chat-quote">quoted words</pre>', 'the html is the body');
-    has(r.obs, '"name":"ChatTimePopup.show","args":["2026-10-28T14:08:00Z"]', 'the time opens at `at`');
+    has(r.obs, '"name":"ChatTimePopup.show","args":["2026-10-28T14:09:00Z"]', 'the time opens at `at`');
     has(r.obs, '"pane.endBacklog"', 'the backlog ends after backlog-size frames');
   },
   reaction_line: (r) => {

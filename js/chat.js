@@ -82,7 +82,7 @@
      backlink and the caret at the start of the original markdown. Append-only +
      transparent — no copy/paste, the backlink wires the relation. */
   function doEdit(rec){
-    if(ChatCompose.isPending()) return;
+    if(ChatCompose.isPending() || !rec.mine) return; /* only one's own message is edited */
     pane.focusBubble(rec.index + 1);
     var prefix='Edit of MSG_'+rec.id+'\n\n';
     ChatRightSidebar.openCompose();
@@ -190,7 +190,8 @@
   /* ===== one append wraps view + supersession + empty-removal =====
      EDIT_RE: markdown starting with "Edit of MSG_<hash>" causes the original
      Message to redraw in-place; append-only on disk, only the rendered view
-     changes. */
+     changes. PRODUCT_DECISION: only its author's edit does (sameAuthor); one
+     by anybody else is an ordinary message, so no post can hide another's. */
   /* PRODUCT_DECISION: empty-state placeholder is a chat-page convention
      (the colored-bubbles demo doesn't want one), so chat.js seeds it
      into pane.bubbles itself and removes it on first append. */
@@ -203,12 +204,19 @@
   })();
 
   var EDIT_RE=/^Edit of MSG_([A-Za-z0-9-]+_[0-9]+)\b/;
+  /* The same author: the same account (from_uid) when both carry one; a
+     message stored before accounts were recorded has none, and is the same
+     author's when the names match, as `mine` decides for it. */
+  function sameAuthor(a, b){  // lint:called-once named for the why-comment above
+    if(a.from_uid && b.from_uid) return a.from_uid===b.from_uid;
+    return a.from===b.from;
+  }
   function appendMessage(m){
     var empty=document.getElementById('chat-empty'); if(empty) empty.remove();
     pane.append(m);
     ChatReactions.paint(m.index + 1); /* reactions that arrived before this bubble */
     var em=(m.markdown||'').match(EDIT_RE);
-    if(em){ var orig=widgetById(em[1]); if(orig) orig.markEdited(m.id); }
+    if(em){ var orig=recordById(em[1]); if(orig && sameAuthor(orig, m)) widgetById(em[1]).markEdited(m.id); }
   }
 
   /* Reactions fold client-side; the widget for message number n is messages[n-1]. */
