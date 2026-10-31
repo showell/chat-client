@@ -710,6 +710,41 @@ test('the reactions sidecar (GET <session-base>/reactions) is read as the frames
   CHECKS.reaction_line(r);
 });
 
+// References: one message of refs, after plans_1. On a channel's page
+// (Cobblestone, topic plans), and on the DM's (1_2, topic plans).
+async function refsPage(root) {
+  const f = ex('message_frame');
+  const link = (id) => `<a href="#msg-${id}" class="msg-ref">MSG_${id}</a>`;
+  const refs = { ...f[1], markdown: 'refs', html: `<p>${link('general.plans_1')} ${link('Cobblestone.plans_1')} ${link('plans_1')}</p>\n` };
+  delete refs.cid;
+  return chatPage({ root, frames: [f[0], refs] });
+}
+const channelRoot = () => ({ ...P(), 'data-conv': 'Cobblestone', 'data-conv-base': '/channel/Cobblestone' });
+// The tabs the references above opened (plans_1's body links MSG_ideas_4, and
+// the raw transcript opens one too).
+const opened = (r) => calls(r, 'window-open').map((c) => c.url).filter((u) => /^\/chat\/msg\/.*plans_1$/.test(u));
+// How many times plans_1 (bubble 1) was selected: by a reference alone.
+const focusedFirst = (r) => calls(r, 'stub').filter((c) => c.name === 'pane.focusBubble' && c.args[0] === 1).length;
+const quoted = (r) => calls(r, 'stub').filter((c) => c.name === 'ChatCompose.insertAtCursor').map((c) => c.args[0].split(' ')[1]);
+
+test('a reference is the page\'s own only when its whole place is: another channel\'s `plans` opens elsewhere', async () => {
+  const r = await refsPage(channelRoot());
+  assert.deepEqual(r.w.errors, []);
+  // MSG_general.plans_1: the same topic name in another channel.
+  assert.deepEqual(opened(r), ['/chat/msg/general.plans_1'], 'only the other channel\'s reference opens a tab');
+  // MSG_Cobblestone.plans_1 and MSG_plans_1 select plans_1 here.
+  assert.equal(focusedFirst(r), 2, 'the page\'s own long and short references select their bubble');
+  assert.deepEqual(quoted(r), ['MSG_Cobblestone.plans_2'], 'a channel page quotes with the long form');
+});
+
+test('on a DM\'s page only a short reference is the page\'s own; a channel\'s opens elsewhere', async () => {
+  const r = await refsPage(P());
+  assert.deepEqual(r.w.errors, []);
+  assert.deepEqual(opened(r), ['/chat/msg/general.plans_1', '/chat/msg/Cobblestone.plans_1'], 'both channels\' references open a tab');
+  assert.equal(focusedFirst(r), 1, 'only the short reference selects its bubble');
+  assert.deepEqual(quoted(r), ['MSG_plans_2'], 'a DM quotes with the short form');
+});
+
 test('a drag to Pinned asks <conv-base>/<sid>/pin', async () => {
   const r = await sidebarPage({ then: dragToPin });
   allCalls.push(...r.w.calls);

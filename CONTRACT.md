@@ -43,10 +43,10 @@ itself are in `client_made` in the JSON; no server sends them.
 |---|---|---|---|
 | conversation | `#chat-root` | holds the attributes in `page_chat_root` | js/chat.js:2 |
 | conversation | `#chat-notify` | the status strip (also on Recent, Code, Images and Docs; notify.js does nothing without it) | js/notify.js:16 |
-| conversation | `#chat-left-sidebar` | the rail's mount | js/chat.js:345 |
-| conversation | `#chat-sidebar-data` | `<script type="application/json">`: `sidebar_data` | js/chat.js:342 |
-| conversation | `#chat-feed` | the feed's mount; the rail goes back in before it on a wide screen (js/chat_responsive.js:80) | js/chat.js:166 |
-| conversation | `#chat-right-sidebar` | the compose rail's mount | js/chat.js:355 |
+| conversation | `#chat-left-sidebar` | the rail's mount | js/chat.js:360 |
+| conversation | `#chat-sidebar-data` | `<script type="application/json">`: `sidebar_data` | js/chat.js:357 |
+| conversation | `#chat-feed` | the feed's mount; the rail goes back in before it on a wide screen (js/chat_responsive.js:80) | js/chat.js:181 |
+| conversation | `#chat-right-sidebar` | the compose rail's mount | js/chat.js:370 |
 | conversation | `.chat-layout` | the desktop column holding the three mounts | js/chat_responsive.js:79 |
 | no topics yet | `#chat-first-topic` | holds `page_first_topic`'s attribute | js/chat_first_topic.js:12 |
 | Recent | `#recent-mount`, `#recent-data` | the mount, and `<script type="application/json">`: `recent_data` | js/recent.js:16, js/recent.js:17 |
@@ -73,12 +73,12 @@ The attributes of `<div id="chat-root">` on the conversation page.
 | `data-conv` | string | yes | js/chat.js:3, js/notify.js:52 | the conversation key: the DM pair (`1_2`) or the channel name |
 | `data-session` | string | yes | js/chat.js:4, js/notify.js:52 | the open topic's id |
 | `data-conv-base` | string | yes | js/chat.js:9 | the conversation's URL root; every per-topic URL is built on it |
-| `data-me` | string | yes | js/chat.js:16, js/chat.js:225 | the viewer's account id: a message is mine when its `from_uid` is this, a reaction when its `uid` is |
+| `data-me` | string | yes | js/chat.js:16, js/chat.js:240 | the viewer's account id: a message is mine when its `from_uid` is this, a reaction when its `uid` is |
 | `data-me-name` | string | yes | js/chat.js:17 | the viewer's name: decides mine for a message with no `from_uid` |
-| `data-search-min` | string of digits | yes | js/chat.js:328 | the shortest word search looks up, in UTF-8 bytes; `ChatSearch.init` throws without it |
-| `data-upload-image-max` | string of digits | yes | js/chat.js:365 | the image cap in bytes; `ChatCompose.init` throws without it |
-| `data-upload-video-max` | string of digits | yes | js/chat.js:366 | the video cap in bytes; `ChatCompose.init` throws without it |
-| `data-upload-accept` | string | yes | js/chat.js:367 | the file picker's `accept` list; `ChatCompose.init` throws without it |
+| `data-search-min` | string of digits | yes | js/chat.js:343 | the shortest word search looks up, in UTF-8 bytes; `ChatSearch.init` throws without it |
+| `data-upload-image-max` | string of digits | yes | js/chat.js:380 | the image cap in bytes; `ChatCompose.init` throws without it |
+| `data-upload-video-max` | string of digits | yes | js/chat.js:381 | the video cap in bytes; `ChatCompose.init` throws without it |
+| `data-upload-accept` | string | yes | js/chat.js:382 | the file picker's `accept` list; `ChatCompose.init` throws without it |
 
 ### `page_first_topic`
 
@@ -105,19 +105,19 @@ names the payload read from a 2xx answer.
 
 | method and URL | body | answer | otherwise | sent at |
 |---|---|---|---|---|
-| GET `<session-base>/saved` | | `saved_ids` | not 2xx: the page says it could not read the saved set | js/chat.js:48 |
+| GET `<session-base>/saved` | | `saved_ids` | not 2xx: the page says it could not read the saved set | js/chat.js:58 |
 | GET `<session-base>/reactions` | | text, one `reaction_line` a line | not 2xx: read as none | js/chat_reactions.js:69 |
 | POST `<session-base>/react` | form: `msg`, `emoji`, `on` (`1` add, `0` retract) | status only; the `reaction` frame repaints | not 2xx: "Reaction failed" | js/chat_reactions.js:61 |
 | POST `<session-base>/send` | form: `markdown`, `cid`; header `X-Chat-Async: 1` | status only; the message frame carrying the `cid` confirms it | not 2xx, or no echo in 3 s: "The host may be down" | js/chat_compose.js:90 |
 | POST `<session-base>/upload` | multipart: `file` | `upload_answer` | not 2xx: the answer's text shown when under 200 characters and not HTML | js/chat_compose.js:216 |
-| GET `<session-base>/stream?since=0` | | the topic stream | | js/chat.js:238 |
-| GET `<session-base>/raw` | | opened in a new tab (`window.open`) | | js/chat.js:386 |
-| GET `<session-base>/download` | | an `<a>` clicked; the server's `Content-Disposition: attachment` keeps the page | | js/chat.js:392 |
+| GET `<session-base>/stream?since=0` | | the topic stream | | js/chat.js:253 |
+| GET `<session-base>/raw` | | opened in a new tab (`window.open`) | | js/chat.js:401 |
+| GET `<session-base>/download` | | an `<a>` clicked; the server's `Content-Disposition: attachment` keeps the page | | js/chat.js:407 |
 | POST `<conv-base>/new` | form: `topic` | `topic_created` | not 2xx: the answer's text shown under the form | js/chat_add_topic.js:71 |
 | POST `<conv-base>/<sid>/pin` | | status only | not 2xx: the row goes back | js/chat_drag_to_pin.js:187 |
 | POST `<conv-base>/<sid>/unpin` | | status only | not 2xx: the row goes back | js/chat_drag_to_pin.js:187 |
-| POST `/chat/docs/save_to_reading_list` | form: `conv`, `sid`, `id`, `from`, `at` (in the viewer's zone), `body`, `note` | status only | not 2xx: "Save failed" | js/chat.js:121 |
-| GET `/chat/msg/<id>` | | opened in a new tab; the server redirects to the message's topic | | js/chat.js:161 |
+| POST `/chat/docs/save_to_reading_list` | form: `conv`, `sid`, `id`, `from`, `at` (in the viewer's zone), `body`, `note` | status only | not 2xx: "Save failed" | js/chat.js:131 |
+| GET `/chat/msg/<id>` | | opened in a new tab; the server redirects to the message's topic | | js/chat.js:176 |
 | GET `/chat/search/words?prefix=<q>` | | `search_words` | a redirect (to the login page) reads as signed out; 429: too fast; 503: not ready; any other not 200: failed (js/chat_search.js:87) | js/chat_search.js:162 |
 | GET `/chat/search/messages?word=<q>` | | `search_messages` | as above | js/chat_search.js:197 |
 | GET `/chat/sidebar/stream` | | the sidebar stream | | js/chat_left_sidebar.js:230 |
@@ -140,12 +140,12 @@ session answers search with a redirect to the login page (js/chat_search.js:85).
 | `<conv-base>/<sid>` | a topic was made | js/chat_left_sidebar.js:285, js/chat_first_topic.js:37 |
 | `<conv-base>/<sid>#msg-<id>` | a search result in another topic, `<conv-base>` being the result's `conv` | js/chat_search.js:228 |
 | `/chat/c/<conv>/<sid>#msg-<id>` | a doc was posted to chat | js/docs.js:108 |
-| `/chat/docs/reading-list` | the link in the "saved" notice | js/chat.js:138 |
+| `/chat/docs/reading-list` | the link in the "saved" notice | js/chat.js:148 |
 | `/chat/docs/<slug>` | a doc's row on Recent | js/recent.js:147 |
 | as sent | `url`, `link_url` and `source_url` are used as the server sent them | js/chat_left_sidebar.js:101, js/chat_left_sidebar.js:119, js/notify.js:65, js/recent.js:147, js/styles.js:74 |
 
 A page opened at `#msg-<id>` lands on that message once the backlog is in
-(js/chat.js:233).
+(js/chat.js:248).
 
 ## Streams
 
@@ -156,9 +156,9 @@ a dropped stream by itself, sending `Last-Event-ID` when frames carried an
 
 | stream | URL | event | data | read at |
 |---|---|---|---|---|
-| topic | `<session-base>/stream?since=0` (js/chat.js:238) | `backlog-size` | `backlog_size` | js/chat.js:264 |
-| | | `message` | `message_frame` | js/chat.js:284 |
-| | | `reaction` | `reaction_line` | js/chat.js:282 |
+| topic | `<session-base>/stream?since=0` (js/chat.js:253) | `backlog-size` | `backlog_size` | js/chat.js:279 |
+| | | `message` | `message_frame` | js/chat.js:299 |
+| | | `reaction` | `reaction_line` | js/chat.js:297 |
 | sidebar | `/chat/sidebar/stream` (js/chat_left_sidebar.js:230) | `message` | `sidebar_user_arrived`, `sidebar_topic_added` or `sidebar_user_online`, told apart by `kind`; another kind is ignored | js/chat_left_sidebar.js:231 |
 | notifications | `/chat/notifications` (js/notify.js:54) | `message` | `notification` | js/notify.js:55 |
 | recent | `/chat/recent/stream` (js/recent.js:241) | `message` | `recent_chat_event` or `recent_doc_event` | js/recent.js:242 |
@@ -189,27 +189,27 @@ data: {"msg":2,"uid":"1","from":"Steve","emoji":"👍","on":true,"at":"2026-10-2
 ### `backlog_size`
 
 The data of an `event: backlog-size` frame: the number of message frames
-that follow as the backlog, as decimal digits (js/chat.js:271,
-js/chat.js:277). Anything else stops the topic and says so.
+that follow as the backlog, as decimal digits (js/chat.js:286,
+js/chat.js:292). Anything else stops the topic and says so.
 
 ### `message_frame`
 
-A message on the topic stream, parsed at js/chat.js:285: the record each
+A message on the topic stream, parsed at js/chat.js:300: the record each
 bubble is built from, and what quote, edit, save and react read.
 
 | field | type | must send | read at | note |
 |---|---|---|---|---|
-| `index` | integer | yes | js/chat.js:217, js/message.js:199, js/message.js:248 | 0-based position in the topic; the message number is `index`+1 |
-| `from` | string | yes | js/chat.js:286, js/message.js:199, js/chat.js:117, js/chat.js:212 | the author's name as of the message |
-| `from_uid` | string | no | js/chat.js:286, js/chat.js:211 | the author's account; absent on a message stored before accounts were recorded; an edit applies only when its author's is the original's |
-| `at` | string | yes | js/message.js:202, js/message.js:230, js/chat.js:118 | an RFC 3339 UTC instant, shown in the viewer's zone |
+| `index` | integer | yes | js/chat.js:232, js/message.js:199, js/message.js:248 | 0-based position in the topic; the message number is `index`+1 |
+| `from` | string | yes | js/chat.js:301, js/message.js:199, js/chat.js:127, js/chat.js:227 | the author's name as of the message |
+| `from_uid` | string | no | js/chat.js:301, js/chat.js:226 | the author's account; absent on a message stored before accounts were recorded; an edit applies only when its author's is the original's |
+| `at` | string | yes | js/message.js:202, js/message.js:230, js/chat.js:128 | an RFC 3339 UTC instant, shown in the viewer's zone |
 | `html` | string | yes | js/message.js:252 | the rendered markdown, sanitized by the server (see "Rendered markdown") |
-| `markdown` | string | yes | js/chat.js:218, js/message.js:273, js/chat.js:75 | the message as written; one starting `Edit of MSG_<id>` supersedes that message in place when its author is that message's (`from_uid`, or the names when either has none), else it is an ordinary message |
-| `id` | string | yes | js/chat.js:176, js/message.js:247, js/chat.js:219 | `<sid>_<n>` |
-| `cid` | string | no | js/chat.js:302, js/chat.js:312 | the sender's client id, on a live frame only; tells this tab its own send arrived |
+| `markdown` | string | yes | js/chat.js:233, js/message.js:273, js/chat.js:85 | the message as written; one starting `Edit of MSG_<id>` supersedes that message in place when its author is that message's (`from_uid`, or the names when either has none), else it is an ordinary message |
+| `id` | string | yes | js/chat.js:191, js/message.js:247, js/chat.js:234 | `<sid>_<n>` |
+| `cid` | string | no | js/chat.js:317, js/chat.js:327 | the sender's client id, on a live frame only; tells this tab its own send arrived |
 
 Mine is decided by the client, never sent: `from_uid` against `data-me`,
-or, without `from_uid`, `from` against `data-me-name` (js/chat.js:286).
+or, without `from_uid`, `from` against `data-me-name` (js/chat.js:301).
 
 ### `reaction_line`
 
@@ -230,7 +230,7 @@ Sent, and not read: `at`.
 ### `sidebar_data`
 
 The inline `<script type="application/json" id="chat-sidebar-data">` on the
-conversation page, parsed at js/chat.js:343 and read by the rail.
+conversation page, parsed at js/chat.js:358 and read by the rail.
 
 | field | type | must send | read at | note |
 |---|---|---|---|---|
@@ -384,7 +384,7 @@ Sent, and not read: `conv`.
 ### `saved_ids`
 
 The answer of GET `<session-base>/saved`: an array of strings, the ids of
-this topic's messages in the viewer's reading list (js/chat.js:49).
+this topic's messages in the viewer's reading list (js/chat.js:59).
 
 ### `topic_created`
 
@@ -462,8 +462,8 @@ relies on this markup:
 
 | markup | the server sends | the client | read at |
 |---|---|---|---|
-| `a.msg-ref` | `<a href="#msg-<id>" class="msg-ref">MSG_<id></a>` for each `MSG_<id>` | styles it (`.chat-body a.msg-ref`); a click jumps to the bubble when `<id>` is in the open topic, else opens `/chat/msg/<id>` in a new tab | js/message.js:146, js/chat.js:151 |
-| its `href` | `#msg-<sid>_<n>`: the topic is what comes before the last underscore | | js/chat.js:151, js/chat.js:153 |
+| `a.msg-ref` | `<a href="#msg-<id>" class="msg-ref">MSG_<id></a>` for each `MSG_<id>` | styles it (`.chat-body a.msg-ref`); a click jumps to the bubble when `<id>`'s whole place is the page's (a short id's topic is the open one; a long id's channel and topic both are), else opens `/chat/msg/<id>` in a new tab | js/message.js:146, js/chat.js:165 |
+| its `href` | `#msg-<sid>_<n>` (a topic's, on this page only) or `#msg-<channel>.<sid>_<n>` (a channel's topic's): the channel before the first `.`, the number after the last `_` | | js/chat.js:162, js/chat.js:170 |
 | `pre` | `<pre><code class="language-<lang>">…</code></pre>` for a fence | styles it (`.chat-body pre`); a click opens the code popup with its text | js/message.js:144 |
 | `pre.chat-quote` | `<pre class="chat-quote">…</pre>` for a `~~~ quote` fence | styles it as a quote (`.chat-body pre.chat-quote`); a click opens the code popup as any `pre` | js/message.js:99 |
 | `img` | `<img src alt [width height]>` | styles it (`.chat-body img`); a click opens the image popup at its `src` | js/message.js:143 |

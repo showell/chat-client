@@ -16,6 +16,16 @@
   var ME=root.dataset.me;
   var ME_NAME=root.dataset.meName;
   var SESSION_BASE=CONV_BASE+'/'+encodeURIComponent(SESSION);
+  /* PRODUCT_DECISION: the page's channel, on a channel's page (<conv-base> is
+     /channel/<name>); '' on a DM's, as no channel's name is empty. A reference
+     meant to travel names its channel (MSG_<channel>.<topic>_<n>); a DM's
+     stays short (MSG_<topic>_<n>), which means "this topic, on this page"
+     only. */
+  var CHANNEL_AT=/^\/channel\/([^\/]+)$/.exec(CONV_BASE);
+  var CHANNEL=CHANNEL_AT ? decodeURIComponent(CHANNEL_AT[1]) : '';
+  /* A reference's id as the page writes it to travel: <channel>.<id> on a
+     channel's page, the id alone on a DM's. */
+  function travelingRef(id){ return CHANNEL ? CHANNEL+'.'+id : id; }  // lint:called-once named for the why-comment above
 
   /* ===== message store — parallel to MessageView's bubble list =====
      PRODUCT_DECISION: chat.js holds the SSE records as plain data
@@ -74,7 +84,7 @@
     ChatRightSidebar.openCompose();
     var fence = pickQuoteFence(rec.markdown);
     ChatCompose.insertAtCursor(
-      'In MSG_'+rec.id+' '+(rec.mine?'I said':'you said')+
+      'In MSG_'+travelingRef(rec.id)+' '+(rec.mine?'I said':'you said')+
       ':\n'+fence+' quote\n'+rec.markdown+'\n'+fence+'\n\n'
     );
   }
@@ -141,20 +151,25 @@
     return span;
   }
 
-  /* ===== cross-session vs same-session MSG_ ref navigation =====
-     PRODUCT_DECISION: cross-session refs open in a new tab via the
-     /chat/msg/<id> lookup endpoint — the server resolves which conv
-     (DM or channel) owns the target session and 302s into it. The
-     client doesn't know the URL space ahead of time. Same-session
-     refs stay client-side (scroll + select via pane.focusBubble). */
+  /* ===== same-page vs elsewhere MSG_ ref navigation =====
+     PRODUCT_DECISION: a reference is the page's own only when its whole place
+     is the page's: a short one (MSG_<topic>_<n>) whose topic is the open one,
+     or a long one (MSG_<channel>.<topic>_<n>) whose channel and topic both
+     are. That one scrolls and selects (pane.focusBubble). Any other opens in a
+     new tab via /chat/msg/<id>, the id as written: the server resolves where
+     it is, or says it can't. Never the topic's name alone: two channels can
+     each have a `plans`. */
+  var LONG_REF=/^([A-Za-z][A-Za-z0-9-]{0,39})\.([A-Za-z0-9-]+_[0-9]+)$/;
+  var SHORT_REF=/^([A-Za-z0-9-]+)_[0-9]+$/;
   function navigateRef(refEl){
-    var hashTarget=refEl.getAttribute('href').replace(/^#/, '');
-    var id=hashTarget.replace(/^msg-/, '');
-    var cut=id.lastIndexOf('_');
-    if(cut<=0) return;
-    var targetSession=id.substring(0,cut);
-    if(targetSession===SESSION){
-      var rec=recordById(id);
+    var id=refEl.getAttribute('href').replace(/^#msg-/, '');
+    var long=LONG_REF.exec(id);
+    var local=long ? long[2] : id;
+    var short=SHORT_REF.exec(local);
+    if(!short) return;
+    var here=short[1]===SESSION && (!long || long[1]===CHANNEL);
+    if(here){
+      var rec=recordById(local);
       if(rec) pane.focusBubble(rec.index + 1);
       return;
     }
