@@ -1,0 +1,33 @@
+#!/bin/bash
+# **EVERY CHECK OF chat-client's OWN, IN ONE COMMAND**: the JS syntax of
+# every script, the lint (tools/lint.py, the rules the `// lint:` markers
+# in js/ answer to), the photo resize decision, the contract with the
+# server, and the Zig module that bundles the scripts. A host's gate runs
+# this from the checkout it pins (angry-gopher's ops/test_chat, roc-chat's
+# tools/verify.shale), so a change here is checked before either ships it.
+#
+#   tools/check
+set -e
+cd "$(dirname "$0")/.."
+
+phase() {
+    local label="$1"
+    shift
+    local t0=$SECONDS
+    "$@"
+    echo "    [phase] ${label}: $((SECONDS - t0))s"
+}
+
+echo "==> JS syntax (js/*.js, batched)"
+phase "js-syntax" node tools/check_js_syntax.mjs js/*.js
+echo "==> JS paper-over + dead-code lint"
+phase "js-lint" python3 tools/lint.py
+echo "==> the photo resize decision (chat_compose.js resizePlan)"
+phase "chat-resize" node tools/test_chat_resize.mjs
+echo "==> the contract with the server"
+phase "contract" node tools/test_contract.mjs
+echo "==> the scripts' bundle (zig build test)"
+phase "zig-test" zig build test
+
+echo
+echo "chat-client: every check passed."

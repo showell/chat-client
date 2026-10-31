@@ -13,10 +13,19 @@ To swap in another client, keep the names the pages ask for. Pages import
 scripts by name, and a missing name fails the host's build.
 
 ```
-zig build test                      # the bundle table
+tools/check                         # every check below, in one command
+node tools/check_js_syntax.mjs js/*.js   # the scripts' syntax
+python3 tools/lint.py               # the lint the `// lint:` markers answer to
 node tools/test_chat_resize.mjs     # the photo resize decision
 node tools/test_contract.mjs        # the contract with the server
+zig build test                      # the bundle table
 ```
+
+**Each host pins this client.** angry-gopher (its zig-server) and roc-chat
+each name the commit they expect in a `chat-client-rev` file, and each
+one's gate fails, naming both commits, when its `../chat-client` checkout
+is at another. Building stays by path; a bump is a deliberate one-line
+commit, made with both hosts' checks.
 
 ## The contract with the server
 
@@ -59,8 +68,6 @@ through it.
 
 ## Not here yet
 
-- **The JS lint** (`jsparse.py`, `lint.py`) and the syntax check still run
-  from angry-gopher's `ops/test_chat`, against this checkout.
-- **No server runs the contract check yet.** Each chat's tests would
+- **No host runs the contract check against its own output yet.** Each chat's tests would
   capture a page, a stream and the answers, and run them through
   `tools/test_contract.mjs` (above).

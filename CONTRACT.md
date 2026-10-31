@@ -3,8 +3,12 @@
 What this client needs from the host that serves it: the pages' elements and
 `data-*` attributes, the inline JSON, the requests it makes and the answers
 it reads, the SSE streams and their frames, and the classes of the rendered
-markdown. Both chats serve this client, angry-gopher's Zig chat and the Roc
-chat (roc-webbox `chat/`), so both owe it everything below.
+markdown. Two hosts build this client and pin it (each one's
+`chat-client-rev`): angry-gopher's Zig chat, which serves it in production,
+and roc-chat, which will serve it for its human conversations. Whoever
+serves it owes it everything below. roc-webbox's `chat/` implements this
+contract in Roc as well, and the audit under "Read but never sent" was
+checked against it.
 
 Each field is cited at the line of `js/` that reads it. The same contract,
 machine-readable, is [`contract/contract.json`](contract/contract.json), and
