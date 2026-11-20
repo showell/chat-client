@@ -1,9 +1,11 @@
 # chat-client
 
-The browser client of Gopher Chat (lynrummy.com/chat): hand-written
-JavaScript with no build step, served verbatim by the chat's host.
+The browser client of Gopher Chat, the chat in
+[angry-gopher](https://github.com/showell/angry-gopher): plain JavaScript,
+with no framework and no build step, served as written by the chat's host.
 
 The code here was written by AI coding agents (Claude), with human supervision.
+Point an agent at this repo to extend it.
 
 ## Use
 
@@ -23,11 +25,10 @@ node tools/test_contract.mjs        # the contract with the server
 zig build test                      # the bundle table
 ```
 
-**Each host pins this client.** angry-gopher (its zig-server) and roc-chat
-each name the commit they expect in a `chat-client-rev` file, and each
-one's gate fails, naming both commits, when its `../chat-client` checkout
-is at another. Building stays by path; a bump is a deliberate one-line
-commit, made with both hosts' checks.
+**The host pins this client.** angry-gopher names the commit it expects in
+its `chat-client-rev` file, and its gate fails, naming both commits, when
+its `../chat-client` checkout is at another. Building stays by path; a bump
+is a one-line commit, made with the host's checks.
 
 ## The contract with the server
 
@@ -37,8 +38,8 @@ and the answers it reads, the SSE streams and their frames, and the classes
 of the rendered markdown, each field cited at the line that reads it.
 [`contract/contract.json`](contract/contract.json) is the same contract,
 machine-readable, with examples. `node tools/test_contract.mjs` runs the
-scripts against those examples and fails when a field is not read under
-its name, so a key renamed on one side and not the other fails here.
+scripts against those examples and fails when a field is read under
+another name, so a key renamed on one side alone fails here.
 
 A server checks itself against the contract by running its own output
 through the same tool, from a checkout of this repository: a page as
@@ -50,8 +51,8 @@ node tools/test_contract.mjs --check-stream topic stream.txt
 node tools/test_contract.mjs --check sidebar_data sidebar.json
 ```
 
-Each exits 0 when the output agrees, and names each disagreement and exits
-1 when it does not. The pages, streams and payloads are named in
+Each exits 0 when the output agrees, and otherwise names each disagreement
+and exits 1. The pages, streams and payloads are named in
 CONTRACT.md ("Checking a server").
 
 ## Layout
@@ -64,12 +65,11 @@ The design is "workhorse, edges and substrate":
 - **The substrate:** shared pieces that self-style, so they drop into other
   pages. They include `message.js`, `message_view.js` and the popups.
 
-The history before this repository is angry-gopher's (`chat/*.js`); it was
-split out with `git filter-branch`, so `git log --follow` reaches back
-through it.
+`git log --follow` reaches back into angry-gopher's history (`chat/*.js`),
+where this code began.
 
-## Not here yet
+## Next
 
-- **No host runs the contract check against its own output yet.** Each chat's tests would
+- **A host runs the contract check against its own output**: its tests
   capture a page, a stream and the answers, and run them through
   `tools/test_contract.mjs` (above).
