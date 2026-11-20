@@ -3,6 +3,8 @@
 The browser client of Gopher Chat (lynrummy.com/chat): hand-written
 JavaScript with no build step, served verbatim by the chat's host.
 
+The code here was written by AI coding agents (Claude), with human supervision.
+
 ## Use
 
 A Zig package: add it to your `build.zig.zon` and import the module
